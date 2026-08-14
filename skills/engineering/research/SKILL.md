@@ -5,6 +5,8 @@ description: Investigate a question against high-trust primary sources and captu
 
 Spin up a **background agent** to do the research, so you keep working while it reads.
 
+If you are already running as a background agent, do not dispatch another agent; perform the research yourself.
+
 Its job:
 
 1. Investigate the question against **primary sources** — official docs, source code, specs, first-party APIs — not a secondary write-up of them. Follow every claim back to the source that owns it.
