@@ -1,0 +1,7 @@
+---
+name: grill-with-docs
+description: 针对计划或设计进行深度盘问以打磨方案，同时在过程中沉淀生成文档（ADR 和术语表）。
+disable-model-invocation: true
+---
+
+结合 `/domain-modeling` 技能启动 `/grilling` 盘问会话。
