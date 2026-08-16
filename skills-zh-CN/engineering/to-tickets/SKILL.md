@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 将计划、Spec 或对话拆解为一组 **Ticket**——每个 Ticket 都是一条垂直切片的示踪弹（Tracer bullet），并显式声明哪些 Ticket 对其构成**阻塞 (block)**。
 
-Issue 追踪系统与分类标签词汇表应已配置完毕——若未配置，请运行 `/setup-matt-pocock-skills`。
+Issue 追踪系统与分类标签词汇表应已配置完毕。若未配置，请告知用户运行 `/setup-matt-pocock-skills`。
 
 ## 执行流程
 

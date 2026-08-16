@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 让本仓库中的每个 package 都成为一个**深模块 (deep module)**：微小的接口背后承载丰富的内部实现。Package 的公开表面积是其**入口文件 (entry points)**——位于 package 根目录下的文件——而其子目录下的所有内容均对外隐藏。本技能安装 [dependency-cruiser](https://github.com/sverweij/dependency-cruiser) 以及强制让入口文件成为唯一外部访问路径的规则，并实证检验规则的有效约束力。
 
-关于词汇体系（深模块、接口、缝隙、深度），运行 `/codebase-design` 技能——通篇使用该标准语言。
+关于词汇体系（深模块、接口、缝隙、深度），调用 Skill 工具并传入 `"codebase-design"`——通篇使用该标准语言。
 
 ## 本规范强制推行的目录形态
 

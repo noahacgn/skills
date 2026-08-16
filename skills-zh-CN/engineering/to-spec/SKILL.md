@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 本技能提取当前对话上下文与代码库认知，产出一份完整的规格说明（Spec）。**不要**对用户发起新的访谈——仅综合提炼你已知的内容。
 
-Issue 追踪系统与分类标签词汇表应已配置完毕——若未配置，请运行 `/setup-matt-pocock-skills`。
+Issue 追踪系统与分类标签词汇表应已配置完毕。若未配置，请告知用户运行 `/setup-matt-pocock-skills`。
 
 ## 执行流程
 
