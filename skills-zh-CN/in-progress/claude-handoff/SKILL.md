@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 始终通过 `-n`/`--name` 传入描述性名称（例如 `--name "修复登录 Bug"`）——它会设定在任务列表、会话选择器与终端标题中展示的名称。
 
-在摘要中包含一个“建议技能 (suggested skills)”小节，推荐该 Agent 应当调用的技能。
+在摘要中包含一个“建议技能 (suggested skills)”小节，列明下一位 Agent 应分别为哪些技能调用 Skill 工具。
 
 不要重复已在其他产物（规格说明、计划、ADR、Issue、Commit、Diff）中记录的内容。请通过路径或 URL 进行引用。
 

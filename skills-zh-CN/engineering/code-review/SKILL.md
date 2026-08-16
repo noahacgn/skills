@@ -10,7 +10,7 @@ description: 沿两个维度审查自固定基准点（Commit、分支、Tag 或
 
 两个维度分别作为**并行子 Agent** 独立运行，避免相互污染上下文，随后由本技能聚合其审查结果。
 
-Issue 追踪系统应已配置完毕——若缺失 `docs/agents/issue-tracker.md`，请运行 `/setup-matt-pocock-skills`。
+Issue 追踪系统应已配置完毕。若缺失 `docs/agents/issue-tracker.md`，请告知用户运行 `/setup-matt-pocock-skills`。
 
 ## 执行流程
 

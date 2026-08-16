@@ -40,7 +40,7 @@ disable-model-invocation: true
 
 每个完成定级的 Issue 应当携带且仅携带一个分类角色和一个状态角色。若状态角色产生冲突，立即标出并在开展任何动作前向维护者确认。
 
-上述为规范角色名称——Issue 追踪系统中的实际标签字符串可能有所不同。映射关系应已配置——若未配置，请运行 `/setup-matt-pocock-skills`。
+上述为规范角色名称——Issue 追踪系统中的实际标签字符串可能有所不同。映射关系应已配置。若未配置，请告知用户运行 `/setup-matt-pocock-skills`。
 
 状态跃迁流向：未打标的 Issue 通常首先进入 `needs-triage`；随后流转到 `needs-info`、`ready-for-agent`、`ready-for-human` 或 `wontfix`。一旦提交者回复，`needs-info` 重新回到 `needs-triage`。维护者随时可以覆盖状态——对看起来异常的跃迁进行标示并在推进前确认。
 
@@ -73,7 +73,7 @@ disable-model-invocation: true
 
 3. **验证事实依据 (Verify the claim)。** 在开展任何盘问之前，验证请求所述是否属实。对于 Bug，按照提交者的步骤尝试复现。对于 PR，确认 Diff 是否真正达成了其声称的效果——检出分支并运行相关测试或命令。汇报验证结果：已证实（附带代码路径）、复现失败、或细节不足（强烈的 `needs-info` 信号）。经过实证检验的结论能够支撑起更有力的 Agent 任务书。
 
-4. **盘问打磨（按需）。** 若需求需要充实，共同运行 `/grilling` 与 `/domain-modeling` 技能——通过逐轮提问将其打磨成型，提炼领域术语并在决策落地时就地更新 `CONTEXT.md` / ADR。
+4. **盘问打磨（按需）。** 若需求需要充实，调用 Skill 工具两次，分别传入 `"grilling"` 与 `"domain-modeling"`——通过逐轮提问将其打磨成型，提炼领域术语并在决策落地时就地更新 `CONTEXT.md` / ADR。
 
 5. **落地执行定级结果：**
    - `ready-for-agent` — 发表 Agent 任务任务书评论（参见 [AGENT-BRIEF.md](AGENT-BRIEF.md)）。
