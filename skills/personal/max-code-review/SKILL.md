@@ -62,7 +62,7 @@ Do not report:
 
 ## Phase 1 — Find candidates
 
-Run 10 independent finder angles. Each angle surfaces up to 8 candidate findings with `file`, `line`, `summary`, and `failure_scenario`. Do not let one angle suppress another. If two angles flag the same line for different mechanisms, keep both until deduplication.
+Run 11 independent finder angles. Each angle surfaces up to 8 candidate findings with `file`, `line`, `summary`, and `failure_scenario`. Do not let one angle suppress another. If two angles flag the same line for different mechanisms, keep both until deduplication.
 
 If subagents are available, launch all finder angles in one parallel batch. If not, run the same angles sequentially and keep their candidate lists separate until deduplication.
 
