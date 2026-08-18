@@ -18,6 +18,8 @@ Check with the user that these seams match their expectations.
 
 3. Write the spec using the template below, then publish it to the project issue tracker. Apply the `ready-for-agent` triage label - no need for additional triage.
 
+Treat the reader as a complete beginner to this repository: they have access to only the current working tree and the single spec you provide. They have no memory of prior plans, conversations, or external context. The spec must therefore be self-contained.
+
 <spec-template>
 
 ## Problem Statement
