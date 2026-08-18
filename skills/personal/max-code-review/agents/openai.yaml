@@ -1,0 +1,5 @@
+interface:
+  display_name: "Max Code Review"
+  short_description: "Deep, recall-oriented review of code changes"
+policy:
+  allow_implicit_invocation: false
