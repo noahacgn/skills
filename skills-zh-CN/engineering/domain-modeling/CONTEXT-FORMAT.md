@@ -40,9 +40,9 @@ _避免使用_: Client, buyer, account
 
 ## 界限上下文列表 (Contexts)
 
-- [Ordering](./src/ordering/CONTEXT.md) — 接收并跟踪客户订单
-- [Billing](./src/billing/CONTEXT.md) — 生成发票并处理支付流程
-- [Fulfillment](./src/fulfillment/CONTEXT.md) — 管理仓库分拣与履约发货
+- [Ordering](./src/ordering/CONTEXT.md)：接收并跟踪客户订单
+- [Billing](./src/billing/CONTEXT.md)：生成发票并处理支付流程
+- [Fulfillment](./src/fulfillment/CONTEXT.md)：管理仓库分拣与履约发货
 
 ## 上下文间关系 (Relationships)
 
