@@ -9,9 +9,9 @@
 
 ## 知识来源 (Knowledge)
 
-- [书籍: 《力量训练的科学与实践》 — Zatsiorsky & Kraemer](https://example.com)
+- [书籍: 《力量训练的科学与实践》，Zatsiorsky & Kraemer](https://example.com)
   关于动作编排与身体适应的奠基之作。适用于：任何与周期化训练、恢复、强度区间相关的内容。
-- [文章: "我应该练多少容量？" — Greg Nuckols (Stronger By Science)](https://example.com)
+- [文章: "我应该练多少容量？"，Greg Nuckols (Stronger By Science)](https://example.com)
   基于循证医学的训练容量地标综述。适用于：每个肌群的每周训练组数目标制定。
 
 ## 实践见识与社区 (Wisdom / Communities)

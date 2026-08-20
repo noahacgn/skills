@@ -82,7 +82,7 @@ npm run test
 
 暂存所有变更/新建文件并以如下信息提交：`Add pre-commit hooks (husky + lint-staged + prettier)`
 
-这将触发刚配置的 pre-commit 钩子——正好作为一次验证一切正常运行的冒烟测试。
+这将触发刚配置的 pre-commit 钩子，正好作为一次验证一切正常运行的冒烟测试。
 
 ## 补充备忘
 
