@@ -10,6 +10,6 @@ Use /tdd where possible, at pre-agreed seams.
 
 Run typechecking regularly, single test files regularly, and the full test suite once at the end.
 
-Once done, use /code-review to review the work.
+Once done, use /code-review (`../code-review/SKILL.md`) to review the work. Wait for the review to complete, address all actionable findings, and repeat until none remain.
 
 Commit your work to the current branch.
