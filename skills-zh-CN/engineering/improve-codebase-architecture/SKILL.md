@@ -11,7 +11,7 @@ disable-model-invocation: true
 本命令*依托*项目的业务领域模型，并建立在通用的设计词汇体系之上：
 
 - 调用 Skill 工具并传入 `"codebase-design"`，以获取架构词汇（**模块 module**、**接口 interface**、**深度 depth**、**缝隙 seam**、**适配器 adapter**、**杠杆率 leverage**、**局部性 locality**）及其核心原则（删除测试法、“接口即测试暴露面”、“单适配器 = 假想缝隙，双适配器 = 真实缝隙”）。在每条建议中严格使用这些术语，切勿混淆使用“组件 (component)”、“服务 (service)”、“API”或“边界 (boundary)”。
-- `CONTEXT.md` 中的业务领域语言为良好的缝隙赋予清晰的业务名称；`docs/adr/` 中的 ADR 记录了已有决策，本命令不应重复讨论已定论的决策。
+- `GLOSSARY.md` 中的业务领域语言为良好的缝隙赋予清晰的业务名称；`docs/adr/` 中的 ADR 记录了已有决策，本命令不应重复讨论已定论的决策。
 
 ## 执行流程
 
@@ -22,7 +22,7 @@ disable-model-invocation: true
 - 若用户指定了明确方向，某个模块、子系统或痛点，直接采纳，跳过下方的自动推断。
 - 否则，回溯一段 Git Commit 历史（`git log --oneline`）寻找代码库的热点（Hot spots），即反复出现的文件和区域，让这些路径优先吸引你的注意力。若变更极为分散且无明显热点，再适度扩大搜索范围。
 
-首先阅读项目的业务领域术语表（`CONTEXT.md`）以及所涉及区域内的任何 ADR。
+首先阅读项目的业务领域术语表（`GLOSSARY.md`）以及所涉及区域内的任何 ADR。
 
 随后派发子 Agent 遍历代码库。不要机械遵循教条式的启发规则，进行有机探索，并记录你在何处感受到了架构摩擦：
 
@@ -51,7 +51,7 @@ disable-model-invocation: true
 
 报告以**首要推荐 (Top recommendation)** 小节收尾：说明你建议优先着手哪一个候选方案及其理由。
 
-**领域概念严格使用 CONTEXT.md 词汇，架构设计严格使用 `/codebase-design` 词汇。** 若 `CONTEXT.md` 定义了“Order”，请表述为“Order 受理模块 (Order intake module)”，而非“FooBarHandler”，也不是“Order 服务”。
+**领域概念严格使用 GLOSSARY.md 词汇，架构设计严格使用 `/codebase-design` 词汇。** 若 `GLOSSARY.md` 定义了“Order”，请表述为“Order 受理模块 (Order intake module)”，而非“FooBarHandler”，也不是“Order 服务”。
 
 **ADR 冲突处理**：若候选方案与现有 ADR 冲突，仅当架构摩擦确实严重到值得重新审视该 ADR 时才提出。在卡片中清晰标记（例如带有警示框：*“与 ADR-0007 存在冲突，但值得重新讨论，因为……”*）。不要罗列 ADR 明令禁止的纯理论性重构。
 
@@ -65,7 +65,7 @@ disable-model-invocation: true
 
 随着决策逐渐成型，就地执行连带操作，调用 Skill 工具并传入 `"domain-modeling"`，保持业务领域模型实时同步：
 
-- **以尚未收录在 `CONTEXT.md` 中的概念命名深化后的模块？** 将该术语添加到 `CONTEXT.md`。若文件不存在则按需创建。
-- **在对话中澄清了某个模糊术语？** 立即就地更新 `CONTEXT.md`。
+- **以尚未收录在 `GLOSSARY.md` 中的概念命名深化后的模块？** 将该术语添加到 `GLOSSARY.md`。若文件不存在则按需创建。
+- **在对话中澄清了某个模糊术语？** 立即就地更新 `GLOSSARY.md`。
 - **用户以具有实质性权衡的理由拒绝了候选方案？** 提议编写 ADR，引导方式如：*“需要我将其记录为 ADR，以便未来的架构审查不再重复提议吗？”* 仅当该理由确实需要被未来的探索者知晓以避免重复走弯路时才提议，跳过临时性理由（“现在精力不够”）与显而易见的理由。
 - **希望为深化后的模块探索替代接口？** 调用 Skill 工具并传入 `"codebase-design"`，运用其二度设计的并行子 Agent 模式。

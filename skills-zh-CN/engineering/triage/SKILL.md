@@ -73,7 +73,7 @@ disable-model-invocation: true
 
 3. **验证事实依据 (Verify the claim)。** 在开展任何盘问之前，验证请求所述是否属实。对于 Bug，按照提交者的步骤尝试复现。对于 PR，确认 Diff 是否真正达成了其声称的效果，检出分支并运行相关测试或命令。汇报验证结果：已证实（附带代码路径）、复现失败、或细节不足（强烈的 `needs-info` 信号）。经过实证检验的结论能够支撑起更有力的 Agent 任务书。
 
-4. **盘问打磨（按需）。** 若需求需要充实，调用 Skill 工具两次，分别传入 `"grilling"` 与 `"domain-modeling"`，通过逐轮提问将其打磨成型，提炼领域术语并在决策落地时就地更新 `CONTEXT.md` / ADR。
+4. **盘问打磨（按需）。** 若需求需要充实，调用 Skill 工具两次，分别传入 `"grilling"` 与 `"domain-modeling"`，通过逐轮提问将其打磨成型，提炼领域术语并在决策落地时就地更新 `GLOSSARY.md` / ADR。
 
 5. **落地执行定级结果：**
    - `ready-for-agent`：发表 Agent 任务任务书评论（参见 [AGENT-BRIEF.md](AGENT-BRIEF.md)）。

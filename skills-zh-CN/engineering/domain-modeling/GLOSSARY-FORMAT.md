@@ -1,4 +1,4 @@
-# CONTEXT.md 格式规范
+# GLOSSARY.md 格式规范
 
 ## 结构示例
 
@@ -31,18 +31,18 @@ _避免使用_: Client, buyer, account
 
 ## 单上下文与多上下文代码库
 
-**单上下文（绝大多数代码库）：** 位于仓库根目录下的单个 `CONTEXT.md`。
+**单上下文（绝大多数代码库）：** 位于仓库根目录下的单个 `GLOSSARY.md`。
 
-**多上下文：** 位于仓库根目录下的 `CONTEXT-MAP.md`，其中列出各个上下文、它们所在的路径以及相互之间的协作关系：
+**多上下文：** 位于仓库根目录下的 `GLOSSARY-MAP.md`，其中列出各个上下文、它们所在的路径以及相互之间的协作关系：
 
 ```md
-# 上下文地图 (Context Map)
+# 术语表地图 (Glossary Map)
 
 ## 界限上下文列表 (Contexts)
 
-- [Ordering](./src/ordering/CONTEXT.md)：接收并跟踪客户订单
-- [Billing](./src/billing/CONTEXT.md)：生成发票并处理支付流程
-- [Fulfillment](./src/fulfillment/CONTEXT.md)：管理仓库分拣与履约发货
+- [Ordering](./src/ordering/GLOSSARY.md)：接收并跟踪客户订单
+- [Billing](./src/billing/GLOSSARY.md)：生成发票并处理支付流程
+- [Fulfillment](./src/fulfillment/GLOSSARY.md)：管理仓库分拣与履约发货
 
 ## 上下文间关系 (Relationships)
 
@@ -53,8 +53,8 @@ _避免使用_: Client, buyer, account
 
 技能自动推断适用的结构：
 
-- 若存在 `CONTEXT-MAP.md`，读取它以定位各个界限上下文
-- 若仅存在根目录下的 `CONTEXT.md`，按单上下文处理
-- 若两者均不存在，在确定第一个领域术语时按需延迟创建根目录下的 `CONTEXT.md`
+- 若存在 `GLOSSARY-MAP.md`，读取它以定位各个界限上下文
+- 若仅存在根目录下的 `GLOSSARY.md`，按单上下文处理
+- 若两者均不存在，在确定第一个领域术语时按需延迟创建根目录下的 `GLOSSARY.md`
 
 当存在多个上下文时，推断当前任务与哪一个上下文相关。若不明确，主动询问。

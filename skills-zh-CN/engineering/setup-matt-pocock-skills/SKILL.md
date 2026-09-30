@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 - **Issue 追踪系统 (Issue tracker)**：Issue 存放位置（默认使用 GitHub；亦原生支持本地 Markdown 文件）
 - **分类定级标签 (Triage labels)**：五种规范分类定级角色所使用的具体字符串
-- **业务领域文档 (Domain docs)**：`CONTEXT.md` 与 ADR 的存放路径，以及查阅它们的消费规则
+- **业务领域文档 (Domain docs)**：`GLOSSARY.md` 与 ADR 的存放路径，以及查阅它们的消费规则
 
 这是一项提示词驱动的技能，而非确定性的硬编码脚本。探索环境、呈现发现、与用户确认，随后写入文件。
 
@@ -22,7 +22,7 @@ disable-model-invocation: true
 
 - `git remote -v` 和 `.git/config`，这是否为 GitHub 仓库？具体是哪一个？
 - 仓库根目录下的 `AGENTS.md` 和 `CLAUDE.md`，是否存在任一文件？其中是否已包含 `## Agent skills` 小节？
-- 根目录下的 `CONTEXT.md` 与 `CONTEXT-MAP.md`
+- 根目录下的 `GLOSSARY.md` 与 `GLOSSARY-MAP.md`
 - `docs/adr/` 及任何 `src/*/docs/adr/` 目录
 - `docs/agents/`：本技能先前的输出是否已存在？
 - `.scratch/`：是否已在使用本地 Markdown Issue 追踪约定
@@ -56,9 +56,9 @@ disable-model-invocation: true
 
 默认值为五种规范角色，每个标签字符串与角色名相同：`needs-triage`、`needs-info`、`ready-for-agent`、`ready-for-human`、`wontfix`。若选择**是**，原样写入。仅当用户回答否时，通常因为其追踪系统已有既定命名（例如用 `bug:triage` 代替 `needs-triage`），收集其映射别名，以便 `triage` 复用现有标签而非创建重复项。
 
-**C 小节：业务领域文档 (Domain docs)。** 默认采用**单上下文 (single-context)**：根目录下的单份 `CONTEXT.md` + `docs/adr/`。这适合绝大多数仓库；无需询问直接采纳。
+**C 小节：业务领域文档 (Domain docs)。** 默认采用**单上下文 (single-context)**：根目录下的单份 `GLOSSARY.md` + `docs/adr/`。这适合绝大多数仓库；无需询问直接采纳。
 
-仅在探索发现 Monorepo 标识时，才提议**多上下文 (multi-context)**：根目录下的 `CONTEXT-MAP.md` 索引各个子上下文的 `CONTEXT.md`。随后与用户确认所需布局。
+仅在探索发现 Monorepo 标识时，才提议**多上下文 (multi-context)**：根目录下的 `GLOSSARY-MAP.md` 索引各个子上下文的 `GLOSSARY.md`。随后与用户确认所需布局。
 
 ### 3. 确认与预览草稿 (Confirm and edit)
 
