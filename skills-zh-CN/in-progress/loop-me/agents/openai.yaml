@@ -1,0 +1,5 @@
+interface:
+  display_name: "Loop Me"
+  short_description: "在当前工作区针对我想要构建的工作流规格对我进行深度盘问。"
+policy:
+  allow_implicit_invocation: false

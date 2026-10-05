@@ -1,0 +1,5 @@
+interface:
+  display_name: "Ask Matt"
+  short_description: "询问哪种技能或流程最契合你当前的情境。本仓库中所有技能的总路由指南。"
+policy:
+  allow_implicit_invocation: false

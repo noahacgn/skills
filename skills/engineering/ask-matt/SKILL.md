@@ -90,6 +90,10 @@ Off the main flow entirely.
 - **`/teach`**: learn a concept over multiple sessions, using the current directory as a stateful workspace.
 - **`/writing-for-agents`** is the reference for writing documents agents consume: skills, AGENTS.md, pointed-at docs.
 
+## 实验性长期目标
+
+- **`/chief-of-staff`**：当你需要在单个长期会话中持续推进目标时，由它负责战略决策，将执行工作交给子 Agent，并在运行环境支持时建议周期性任务。它属于 `in-progress`，需要单独安装并由用户调用，不随插件提供。若目标是执行已有规格和 Ticket 图，使用 `/implement-spec`；若尚需厘清方向，使用 `/wayfinder`。
+
 ## Precondition
 
 **`/setup-matt-pocock-skills`**: run before your first engineering flow to configure the issue tracker, triage labels, and doc layout the other skills assume. Custom issue trackers also work.

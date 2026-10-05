@@ -1,0 +1,5 @@
+interface:
+  display_name: "Handoff"
+  short_description: "将当前对话浓缩为交接文档，以便另一个 Agent 接手。"
+policy:
+  allow_implicit_invocation: false

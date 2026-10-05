@@ -1,0 +1,5 @@
+interface:
+  display_name: "To Spec"
+  short_description: "将当前对话转化为规格说明（Spec）并发布到项目 Issue 追踪系统：无需新一轮访谈，仅综合梳理已讨论过的内容。"
+policy:
+  allow_implicit_invocation: false

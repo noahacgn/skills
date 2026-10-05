@@ -1,0 +1,3 @@
+interface:
+  display_name: "Scaffold Exercises"
+  short_description: "自动创建包含章节、练习题、参考解答与概念讲解且能通过 Lint 检查的练习目录结构。当用户希望搭建练习脚手架、创建练习桩代码或设置全新课程章节时使用。"

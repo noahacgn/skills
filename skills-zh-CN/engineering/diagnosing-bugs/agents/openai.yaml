@@ -1,0 +1,3 @@
+interface:
+  display_name: "Diagnosing Bugs"
+  short_description: "针对疑难 Bug 与性能退化的诊断排查循环。当用户表示“diagnose / debug this”或报告某处损坏、报错、失败或变慢时使用。"

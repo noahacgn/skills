@@ -1,0 +1,5 @@
+interface:
+  display_name: "Triage"
+  short_description: "推动 Issue 与外部 PR 穿越由分类定级角色构成的状态机，分类、验证、按需盘问并撰写 Agent 就绪的任务任务书（Agent briefs）。"
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Code Review"
+  short_description: "沿两个维度审查自固定基准点（Commit、分支、Tag 或 merge-base）以来的代码变更：规范维度（代码是否遵循本仓库记录的编码规范？）与规格维度（代码是否符合原始 Issue/Spec 的诉求？）。在并行子 Agent 中分别运行两次审查并并排呈现报告。当用户希望审查分支、PR、正在进行的变更或提出“review since X”时使用。"
+policy:
+  allow_implicit_invocation: false

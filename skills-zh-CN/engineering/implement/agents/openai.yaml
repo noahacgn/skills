@@ -1,0 +1,5 @@
+interface:
+  display_name: "Implement"
+  short_description: "基于规格说明（Spec）或一组 Ticket 开展具体编码实现。"
+policy:
+  allow_implicit_invocation: false

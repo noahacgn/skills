@@ -1,0 +1,5 @@
+interface:
+  display_name: "To Tickets"
+  short_description: "将计划、规格说明或当前对话拆解为一组示踪弹 Ticket（Tracer-bullet tickets），每个 Ticket 声明其阻塞依赖边，发布到配置的追踪系统中，在本地表现为单文件单 Ticket 的文本依赖，在真实系统中表现为原生阻塞关联。"
+policy:
+  allow_implicit_invocation: false

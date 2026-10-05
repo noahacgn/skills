@@ -1,0 +1,5 @@
+interface:
+  display_name: "To Questionnaire"
+  short_description: "将你无法完全解答的决策转化为问卷，供他人填写。"
+policy:
+  allow_implicit_invocation: false

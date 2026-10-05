@@ -1,0 +1,3 @@
+interface:
+  display_name: "TDD"
+  short_description: "测试驱动开发（TDD）。当用户希望测试优先构建功能或修复 Bug、提及“红-绿-重构 (red-green-refactor)”、或希望编写集成测试时使用。"
