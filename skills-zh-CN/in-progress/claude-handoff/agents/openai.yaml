@@ -1,5 +1,0 @@
-interface:
-  display_name: "Claude Handoff"
-  short_description: "将当前对话交接给一个全新的后台 Agent，以便其立即接续开展工作。"
-policy:
-  allow_implicit_invocation: false

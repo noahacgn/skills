@@ -1,5 +1,0 @@
-interface:
-  display_name: "Wayfinder"
-  short_description: "规划超出单个 Agent 会话容量的超大型工作，在 Issue 追踪系统上绘制由决策 Ticket 构成的共享地图，并逐一解决它们，直至通向目标的路径完全清晰。"
-policy:
-  allow_implicit_invocation: false

@@ -1,5 +1,0 @@
-interface:
-  display_name: "Writing Beats"
-  short_description: "写作实操阶段，将原始素材组装为由节拍（Beats）驱动的行进旅程，在后续节拍依赖某个概念前先完成铺垫奠基。"
-policy:
-  allow_implicit_invocation: false

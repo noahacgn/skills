@@ -1,3 +1,0 @@
-interface:
-  display_name: "Codebase Design"
-  short_description: "用于设计深模块（Deep modules）的通用词汇与规范体系。当用户希望设计或改进模块接口、寻找深化机会、决定缝隙位置、提高代码的可测试性或 AI 导航友好度，或当其他技能需要深模块词汇时使用。"

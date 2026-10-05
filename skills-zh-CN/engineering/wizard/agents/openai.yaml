@@ -1,5 +1,0 @@
-interface:
-  display_name: "Wizard"
-  short_description: "生成交互式 Bash 向导脚本，引导人类逐步完成只有人类才能执行的操作。在配置基础设施、设置凭据或 CI 密钥、操作陌生的第三方控制台后台、或运行一次性数据迁移/上线切换时使用。不要针对 Agent 自身能够独立完成的操作调用本技能。"
-policy:
-  allow_implicit_invocation: false

@@ -8,7 +8,6 @@ Beta 测试版。这些技能特意对外公开，欢迎试用并向我反馈踩
 npx skills@latest add mattpocock/skills --skill=<name>
 ```
 
-- **[chief-of-staff](./chief-of-staff/SKILL.md)**：在单个长期会话中协调子 Agent 和定时任务，持续推进目标并改善 Agent 的运行环境。用户触发。
 - **[loop-me](./loop-me/SKILL.md)**：在当前工作区跨多个会话对自己进行深度盘问，以产出可落地的自动化工作流规格说明。用户触发。
 - **[writing-beats](./writing-beats/SKILL.md)**：将文章打造成由节拍（Beats）驱动的行进旅程，类似互动式冒险游戏风格。挑选一个起始节拍，仅编写该节拍，随后转向下一个，直至文章自然完结。
 - **[writing-fragments](./writing-fragments/SKILL.md)**：深度访谈会话，旨在挖掘你的碎片想法（各类异构的灵感素材），并将其追加到单个文档中作为未来文章的原材料。

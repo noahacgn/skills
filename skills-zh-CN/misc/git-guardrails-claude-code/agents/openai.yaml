@@ -1,3 +1,0 @@
-interface:
-  display_name: "Git Guardrails for Claude Code"
-  short_description: "配置 Claude Code 钩子，在危险 Git 命令（push、reset --hard、clean、branch -D 等）执行前对其进行拦截。当用户希望防止破坏性 Git 操作、添加 Git 安全护栏、或在 Claude Code 中拦截 git push/reset 时使用。"

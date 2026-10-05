@@ -1,3 +1,0 @@
-interface:
-  display_name: "Writing for Agents"
-  short_description: "为 Agent 编写文档指南。在创建或编辑技能、或修改 AGENTS.md / CLAUDE.md 时使用。"

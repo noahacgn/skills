@@ -1,5 +1,0 @@
-interface:
-  display_name: "Setup TS Deep Modules"
-  short_description: "在 TypeScript 仓库中配置 dependency-cruiser，使每个 package 均成为深模块，实现隐藏在子目录中，仅允许通过根目录入口文件访问。用户触发。"
-policy:
-  allow_implicit_invocation: false

@@ -1,5 +1,0 @@
-interface:
-  display_name: "Writing Fragments"
-  short_description: "写作探索发散阶段：挖掘原始碎片想法，尚不引入结构。"
-policy:
-  allow_implicit_invocation: false

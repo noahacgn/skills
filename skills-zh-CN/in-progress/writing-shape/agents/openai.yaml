@@ -1,5 +1,0 @@
-interface:
-  display_name: "Writing Shape"
-  short_description: "写作实操阶段：逐段将原始素材打磨成型为正式文章。"
-policy:
-  allow_implicit_invocation: false

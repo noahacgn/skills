@@ -1,5 +1,0 @@
-interface:
-  display_name: "Prototype"
-  short_description: "构建一次性抛弃型原型以解答设计疑问。当用户希望验证状态模型或业务逻辑是否合理，或探索 UI 应呈现为何种形态时使用。"
-policy:
-  allow_implicit_invocation: false

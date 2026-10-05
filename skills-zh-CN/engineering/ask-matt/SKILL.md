@@ -90,10 +90,6 @@ disable-model-invocation: true
 - **`/teach`**：跨多个会话学习某个概念，将当前目录作为带状态的教学工作区。
 - **`/writing-for-agents`**：编写 Agent 所读取文档的参考规范：涵盖 Skill、AGENTS.md、指针引用的文档等。
 
-## 实验性长期目标
-
-- **`/chief-of-staff`**：当你需要在单个长期会话中持续推进目标时，由它负责战略决策，将执行工作交给子 Agent，并在运行环境支持时建议周期性任务。它属于 `in-progress`，需要单独安装并由用户调用，不随插件提供。若目标是执行已有规格和 Ticket 图，使用 `/implement-spec`；若尚需厘清方向，使用 `/wayfinder`。
-
 ## 前置依赖 (Precondition)
 
 **`/setup-matt-pocock-skills`**：在开启第一个工程流程前运行，用于配置其他技能所依赖的 Issue 追踪系统、分类标签及文档布局。亦支持自定义 Issue 追踪系统。

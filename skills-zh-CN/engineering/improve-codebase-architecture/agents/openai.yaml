@@ -1,5 +1,0 @@
-interface:
-  display_name: "Improve Codebase Architecture"
-  short_description: "扫描代码库以寻找模块深化机会，以可视化 HTML 报告形式呈现，随后针对你选定的方案进行深度盘问。"
-policy:
-  allow_implicit_invocation: false
