@@ -36,7 +36,7 @@ A run has five steps, in order:
 2. Drive [tdd](https://aihero.dev/skills-tdd) at the pre-agreed seams, one red-green slice at a time.
 3. Typecheck often, run single test files as it goes.
 4. Run the full test suite once, at the end.
-5. Run [code-review](https://aihero.dev/skills-code-review), then commit to the current branch.
+5. 调用 [code-review](https://aihero.dev/skills-code-review)，等待评审完成，修复发现的问题并重复评审，直到没有待处理的问题，再提交到当前分支。
 
 One run covers one ticket. The tickets [to-tickets](https://aihero.dev/skills-to-tickets) produces are tracer-bullet vertical slices sized to fit a single fresh [context window](https://www.aihero.dev/ai-coding-dictionary/context-window), so the intended rhythm is: clear context, implement one ticket, commit, clear again. Each ticket is self-contained, so you can discard the previous ticket's context.
 
@@ -50,7 +50,7 @@ The "pre-agreed" part matters, and it is also the skill's weakest point. Nothing
 
 **It finished, but my ticket is still open and the acceptance criteria are still unchecked.**
 
-Correct, and expected. `implement` has no completion step. It ends at the commit and never touches the work item. This is the same on GitHub Issues and on the local markdown tracker, so it is not a tracker integration problem. It also does not act on the findings `code-review` produced, and does not tick the `- [ ]` boxes on the originating issue. Close the ticket and reconcile the criteria yourself. This matters most on a dependency chain, because `to-tickets` defines the frontier as tickets whose blockers are all closed. If nothing gets closed, nothing ever becomes visibly unblocked.
+这是预期行为。`implement` 会处理 `code-review` 发现的问题并复审，随后提交代码，但不会关闭工作项，也不会勾选原始 Issue 中的 `- [ ]` 验收项。GitHub Issues 和本地 Markdown 追踪器都如此。你仍需核对验收条件并关闭 Ticket。对于依赖链，这一步尤其重要：`to-tickets` 将所有阻塞项均已关闭的 Ticket 视为可执行项，阻塞项未关闭时，后续 Ticket 就不会进入可执行集合。
 
 **Can I point it at all my tickets at once, or run several in parallel?**
 
@@ -72,12 +72,12 @@ Probably not. The ticket is more likely too big. A run does codebase exploration
 
 **`/implement #2` in a fresh session worked on something completely unrelated.**
 
-The agent resolves `#2` against whatever numbered list it can see. In a fresh session that may be a todo file, a checklist, or another work list rather than the configured tracker. The agent does not stop when the match is uncertain, so the mistake is not obvious until the work has started. Pass the full reference, the issue URL or `owner/repo#2`, and ask it to confirm the title back before it begins.
+The agent resolved `#2` against another numbered list in context, such as a todo file or checklist, rather than the configured tracker. `implement` now fetches a passed reference from the issue tracker and states its title before starting, and asks when the reference is ambiguous. Check that title matches the ticket you meant; passing the issue URL or `owner/repo#2` removes the ambiguity entirely.
 
 ## It's working if
 
 - The session opens by reading the ticket or spec and restating what it will build, rather than asking you what to build.
-- You can see an actual `/tdd` invocation in the trace, not just tests appearing in the diff.
+- You can see an actual `tdd` Skill tool call in the trace, not just tests appearing in the diff.
 - Typechecks and single test files run repeatedly during the run, and the full suite runs once near the end.
 - The run reaches a commit on your current branch without you prompting it to carry on.
 - The diff is one ticket's worth of change: a vertical slice through every layer, not several tickets swept together.
