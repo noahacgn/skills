@@ -10,7 +10,7 @@ description: "沿两个维度审查自固定基准点（Commit、分支、Tag �
 
 两个维度分别作为**并行子 Agent** 独立运行，避免相互污染上下文，随后由本技能聚合其审查结果。
 
-Issue 追踪系统应已配置完毕。若缺失 `docs/agents/issue-tracker.md`，请告知用户运行 `/setup-matt-pocock-skills`。
+Issue 追踪系统的相关信息应已提供给你。若尚未提供，请告知用户运行 `/setup-matt-pocock-skills`。
 
 ## 执行流程
 
@@ -26,14 +26,14 @@ Issue 追踪系统应已配置完毕。若缺失 `docs/agents/issue-tracker.md`�
 
 按以下顺序查找原始规格说明：
 
-1. Commit 提交信息中的 Issue 引用（`#123`、`Closes #45`、GitLab `!67` 等），通过 `docs/agents/issue-tracker.md` 中的工作流获取。
+1. Commit 提交信息中的 Issue 引用（`#123`、`Closes #45`、GitLab `!67` 等），通过追踪系统文档中规定的工作流获取。
 2. 用户作为参数传入的文件路径。
 3. `docs/`、`specs/` 或 `.scratch/` 下与分支名或功能匹配的 Spec 文件。
 4. 若均未找到，向用户询问 Spec 所在位置。若用户确认不存在，**规格 (Spec)** 子 Agent 将跳过并汇报“无可用规格说明”。
 
 ### 3. 识别规范来源 (Standards sources)
 
-仓库中记录代码编写要求的任何文档，例如 `CODING_STANDARDS.md` 或 `CONTRIBUTING.md`。
+搜索仓库中所有记录代码编写要求的文件。若存在 `CODING_STANDARDS.md` 或 `CONTRIBUTING.md`，必须将其列入清单。
 
 除了仓库自身记录的规范外，规范维度始终附带下方的**坏味道基准 (smell baseline)**：这是一组固定的 Fowler 代码坏味道规则（《重构》第 3 章），即使仓库未记录任何规范也依然适用。其受两条规则约束：
 
@@ -56,6 +56,8 @@ Issue 追踪系统应已配置完毕。若缺失 `docs/agents/issue-tracker.md`�
 - **被拒绝的遗赠 (Refused Bequest)**：子类或实现类忽略或覆盖了其继承的大部分内容。→ 放弃继承，改用组合（Composition）。
 
 ### 4. 并行启动两个子 Agent
+
+同时在前台发起两个子 Agent 调用，并汇总它们返回的报告。
 
 **规范维度 (Standards) 子 Agent Prompt**：包含：
 

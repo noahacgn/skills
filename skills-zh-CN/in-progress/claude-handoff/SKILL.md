@@ -5,7 +5,7 @@ argument-hint: "下一次会话将用于什么？"
 disable-model-invocation: true
 ---
 
-编写一份当前对话的交接摘要，以便全新 Agent 能够继续开展工作。无需将其保存在本地磁盘，而是直接启动一个以后台模式运行的 Agent，并将该摘要作为其 Prompt 启动种子：`claude --bg --name "<描述性名称>" "<交接摘要>"`。它在当前工作目录下启动并立即返回；用户可通过 `claude agents` 对其进行管理。
+编写一份当前对话的交接摘要，以便全新 Agent 能够继续开展工作。将摘要保存到用户操作系统的临时目录，再启动以该摘要作为 Prompt 的后台 Agent：`claude --bg --name "<descriptive name>" -- "$(cat <summary file>)"`。从文件读取摘要后传入，可以避免 Shell 执行摘要中的反引号命令或展开其中的 `$`。它在当前工作目录下启动并立即返回；用户可通过 `claude agents` 对其进行管理。
 
 始终通过 `-n`/`--name` 传入描述性名称（例如 `--name "修复登录 Bug"`），它会设定在任务列表、会话选择器与终端标题中展示的名称。
 

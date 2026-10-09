@@ -60,7 +60,7 @@ Issue 追踪系统与分类标签词汇表应已配置完毕。若未配置，�
 发布已批准的 Ticket。**具体发布方式**取决于 `/setup-matt-pocock-skills` 所配置的追踪系统，无论哪种方式，Ticket 内容本身完全一致，仅阻塞依赖边的形态有所不同：
 
 - **本地文件** → 在 `.scratch/<feature-slug>/issues/<NN>-<slug>.md` 下以单文件管理单 Ticket，按依赖先后顺序从 `01` 开始连续编号（被依赖的阻塞项排在前面）。每个文件的“Blocked by”列出其依赖的编号/标题。使用下方的单 Ticket 文件模板，单文件单 Ticket，绝不要合成为单个大文件。
-- **真实 Issue 追踪系统 (GitHub, Linear 等)** → 按依赖顺序逐个发布 Issue（前置阻塞项先发布），以便后续 Ticket 的阻塞边能够引用真实的实体 ID。在平台支持原生阻塞 / Sub-issue 关联时优先采用原生关联；否则将每个 Ticket 的“Blocked by”指向对应的阻塞 Issue。除非另有指示，统一打上 `ready-for-agent` 标签，这些 Ticket 在构造上天然支持 Agent 独立认领。
+- **真实 Issue 追踪系统 (GitHub, Linear 等)** → 按依赖顺序逐个发布 Issue（前置阻塞项先发布），以便后续 Ticket 的阻塞边能够引用真实的实体 ID。平台支持原生阻塞关联时优先采用原生关联；否则将每个 Ticket 的“Blocked by”指向对应的阻塞 Issue。如果需求来源于已有 Issue，将每个 Ticket 设为该 Issue 的子 Issue（按追踪系统文档中的操作方式执行）。除非另有指示，统一打上 `ready-for-agent` 标签，这些 Ticket 在构造上天然支持 Agent 独立认领。
 
 始终关注并推进**前沿边界 (frontier)**：即所有前置阻塞项均已完成的任何 Ticket。对于纯线性依赖链，这意味着自顶向下依序推进。
 
@@ -98,7 +98,7 @@ Issue 追踪系统与分类标签词汇表应已配置完毕。若未配置，�
 
 ## 前置阻塞项
 
-- 指向各个阻塞 Ticket 的引用，或填写“无，可立即开工”。
+- 指向各个阻塞 Ticket 的引用，或填写“无，可立即开工”。若已通过原生依赖边设置阻塞关系，则省略本节。
 
 </issue-template>
 
