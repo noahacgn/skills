@@ -12,6 +12,6 @@ Call the Skill tool with "tdd" where possible, at pre-agreed seams.
 
 Run typechecking regularly, single test files regularly, and the full test suite once at the end.
 
-完成实现后，用 `code-review` 调用 Skill 工具审查本次工作。等待评审完成，处理所有需要处理的问题，并重复评审，直到没有待处理的问题。
+Once done, call the Skill tool with "code-review" to review the work. Wait for the review to complete, address all actionable findings, and repeat until none remain.
 
 Commit your work to the current branch.

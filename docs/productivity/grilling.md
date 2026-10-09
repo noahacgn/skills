@@ -24,9 +24,9 @@ The skill rests on three ideas.
 
 The **design tree** is the model of the subject: decisions with decisions hanging off them. The **frontier** is the set of decisions whose prerequisites are all settled: the only questions the agent can ask yet. A **round** is one frontier, asked in full and answered in full.
 
-每轮问题采用固定格式：`🐰` 后列出编号和标题，接着是问题正文，推荐答案单独放在 `🥕` 行。你可以按编号回答整轮问题，例如“1 同意，2 选第二项，3 不同意，理由如下”。问题措辞与推荐答案保持同向，回答“yes”就表示接受推荐。
+Inside a round, every question has a fixed format: numbered and titled behind a `🐰`, then the body, then the agent's recommended answer alone on a `🥕` line. This format lets you answer a round by number ("1 yes, 2 the second option, 3 no, here's why") instead of by quoting questions back. Each question is worded so "yes" accepts the recommended answer.
 
-另一个关键是区分事实与决策。事实由 Agent 负责查证，包括从[环境](https://www.aihero.dev/ai-coding-dictionary/environment)中的文件、工具或外部 API 获取信息；决策由你作出，Agent 必须等待你的回答。每轮问题直接在对话中呈现。当前沿清空后，Agent 仍须等你确认双方已达成共同理解，才开始执行约定的工作。
+The other half of the design is the split between facts and decisions. Facts are the skill's own job. When a frontier question needs something the [environment](https://www.aihero.dev/ai-coding-dictionary/environment) can settle, the agent looks it up in files, tools, or external APIs. Each round is presented directly in the conversation. Decisions are yours, and the agent must wait for them. The session ends when the frontier is empty. The agent then waits for you to confirm a shared understanding before it acts on what you agreed.
 
 The frontier has one limit. The agent chooses it by judgement; it does not compute it from a graph. So it can put two questions in one round and only later find that one answer should have changed the other. The only guard is to tell it. That reopens the affected branch in the next round.
 
@@ -74,10 +74,10 @@ This is a real bug, still unfixed, and users report it across [harnesses](https:
 
 ## It's working if
 
-- 每轮问题以 `🐰` 编号列出，推荐答案单独放在 `🥕` 行，可以按编号回答整轮问题；回答“yes”即接受推荐。
+- A round arrives as a numbered list behind `🐰`, each question with its recommendation on a separate `🥕` line, and you can answer the whole round by number. Answering "yes" accepts the recommendation.
 - Nothing in a round needs another question in the same round answered first.
 - Later rounds ask things the first round could not have asked.
-- Agent 会通过文件、工具或外部 API 查证事实，将需要你决定的问题留给你回答。
+- It goes and looks facts up in files, tools, or external APIs rather than asking you something it could have found out. It leaves decisions for you to answer.
 - It stops at the end and asks you to confirm the understanding is shared, instead of starting work.
 - Question count stays high while round count stays low.
 
