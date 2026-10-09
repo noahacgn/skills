@@ -2,7 +2,7 @@
 #                    Codex CLI — config.toml 完整配置参考                      #
 #                                                                             #
 #  文件位置: ~/.codex/config.toml (即 $CODEX_HOME/config.toml)                #
-#  适用版本: Codex CLI rust-v0.160.0 (源码提交 a956835d02)                   #
+#  适用版本: Codex CLI rust-v0.162.0 (源码提交 c1382380de)                   #
 #  说    明: 本文件覆盖当前公开 Schema 可见配置项, 并附带详细中文参考         #
 #            尽量标注类型 / 默认值 / 可选值 / 运行时作用                      #
 #            本文件含非默认值和环境相关示例, 使用前请按实际环境审阅              #
@@ -175,12 +175,25 @@ web_search = "cached"
 # 常用值:
 #   "default"  — 标准路由: 显式退出模型目录或托管配置中的默认服务层
 #   "priority" — 优先速度: 这是发送给服务端的当前请求值
+#   "ultrafast" — Ultra Fast 路由; 需启用 [features].ultrafast_mode,
+#                 且当前模型目录声明支持此服务层
 #   "fast"     — priority 的旧别名, 仍可被解析为快速层
 #   "flex"     — 优先节省: 使用弹性队列, 价格更低, 但响应可能较慢
 # 说明: 源码还会透传未知字符串, 以便服务端/实验环境支持新的 tier id。
 #       符合条件的 ChatGPT 计划在 v0.124.0 起默认使用快速层, 除非你显式
 #       设置 service_tier 或退出托管默认值
 service_tier = "priority"
+
+# ── daybreak ──────────────────────────────────────────────────────────────
+# 类型: 布尔值 (可选) | 默认: false
+# 作用: 为新线程与非交互回合设置 Daybreak 偏好
+# 说明: CLI 还需启用 [features].cli_daybreak, 并由所连接服务的模型目录确认
+#       当前账号和模型支持 Daybreak。仅适用于内置 openai 提供商;
+#       TUI 支持 ChatGPT 登录, 或启用 api_key_cyber_access_programs 后使用
+#       具备相应权限的 API Key; 非交互 exec 自动启用 Daybreak 时要求 ChatGPT 登录。
+#       TUI 可通过 /daybreak 切换并保存选择; 恢复会话时优先使用会话中
+#       保存的偏好, 命令行 -c daybreak=... 可显式覆盖
+# daybreak = false
 
 # ── personality ────────────────────────────────────────────────────────────
 # 类型: 字符串 (可选)
@@ -816,13 +829,19 @@ project_root_markers = [".git", "package.json", "go.mod", "pyproject.toml"]
 enabled = true
 
 # ── [audio] — 实时语音设备 ──────────────────────────────────────────────────
-# 作用: 保存宿主应用使用的机器本地实时语音设备偏好
-# 说明: 当前 Rust core 只读取并保存任意字符串, 不解释 "default"、不选择设备,
-#       也不实现设备不存在时的回退或警告; 这些行为由实际宿主决定
+# 作用: 保存本机实时语音设备与麦克风输入声道偏好
+# 说明: microphone / speaker 的设备标识由宿主解释, "default" 不是保留值;
+#       本地 TUI 可通过 /voice settings 选择设备及需要混合的输入声道
 # [audio]
 # microphone — 类型: 字符串 (可选) | 配置默认: 未设置
 # 宿主定义的麦克风设备标识
 # microphone = "host-defined-input-device-id"
+
+# microphone_channel — 类型: 正整数或正整数数组 (可选) | 默认: 混合全部输入声道
+# 编号从 1 开始, 每项范围为 1-65535, 使用时必须对应设备实际存在的声道。
+# 单个编号选择一路输入; 数组选择多路并混合。以下两种写法择一:
+# microphone_channel = 1
+# microphone_channel = [1, 2]
 
 # speaker — 类型: 字符串 (可选) | 配置默认: 未设置
 # 宿主定义的扬声器/耳机设备标识
@@ -937,6 +956,8 @@ model_migrations = { "gpt-5.3-codex" = "gpt-5.4" }
 #       其他机制选择有效后端时, Windows 沙箱保持禁用。
 #       [features].prefer_mxc = true 可在本机满足条件时优先选择 MXC;
 #       该偏好不改写此配置, 远程执行器仍继承显式配置的后端
+#       requirements 对可用后端的限制优先; 显式选择被禁止的 mxc 会报错,
+#       自动选择也不会绕过该限制
 sandbox = "elevated"
 
 
@@ -1252,6 +1273,12 @@ alternate_screen = "auto"
 # alternate_screen = "never" 或 --no-alt-screen 会阻止使用全屏模式
 fullscreen_transcript = true
 
+# mouse_scroll_speed — 类型: 有限正数 (可选) | 默认: 1.0
+# 全屏对话记录的鼠标滚轮速度倍率, 以每次滚轮事件滚动 1 行为基准。
+# 0.5 等小数减慢滚动并累计不足一行的位移, 大于 1.0 的值加快滚动;
+# 不接受 0、负数、inf 或 nan
+# mouse_scroll_speed = 1.0
+
 # copy_on_select — 类型: 字符串 | 默认: "auto"
 # 控制全屏对话记录中的鼠标选择是否在松开按钮时自动复制。
 # 可选值:
@@ -1373,6 +1400,7 @@ show_server_version_notice = true
 #   "codex-version"        — Codex CLI 版本号
 #   "thread-id"            — 当前线程 ID (也接受旧别名 session-id)
 #   "fast-mode"            — Fast 模式状态
+#   "daybreak"             — 当前线程的 Daybreak 开关状态
 #   "raw-output"           — 原始 scrollback 模式状态
 #   "thread-name"          — 当前线程名称; 未命名时不显示此项
 #   "thread-title"         — 当前线程标题; 未命名时回退到线程 ID
@@ -1403,6 +1431,12 @@ raw_output_mode = false
 #   "comfortable" — 更宽松的列表, 适合查看摘要
 # 作用: 控制 /resume 和 /fork 会话选择器的默认布局
 session_picker_view = "dense"
+
+# agents_overview_grouping — 类型: 字符串 | 默认: "project"
+# Agent Command Center 中的任务分组方式:
+#   "project" — 按项目; "status" — 按状态; "model" — 按模型
+# 面板内切换分组时会保存此偏好
+# agents_overview_grouping = "project"
 
 # resume_cwd — 类型: 字符串 (可选) | 默认: 无
 # 可选值:
@@ -1437,6 +1471,7 @@ session_picker_view = "dense"
 #   "total-output-tokens"  — 总输出 token 数
 #   "thread-id"            — 当前线程 ID (也接受旧别名 session-id)
 #   "fast-mode"            — Fast 模式状态
+#   "daybreak"             — 当前线程的 Daybreak 开关状态
 #   "model"                — 当前模型名 (也接受旧别名 model-name)
 #   "model-with-reasoning" — 模型名称 + 推理等级
 #   "reasoning"            — 当前推理等级
@@ -1527,8 +1562,8 @@ terminal_resize_reflow_max_rows = 9000
 #              close_transcript, find
 #   list     — 列表选择动作: move_up, move_down, move_left, move_right,
 #              page_up, page_down, jump_top, jump_bottom, accept, cancel
-#   agents   — Agents 总览动作: resume, search, new_task, new_worktree, rename, stop,
-#              archive, delete, hide, toggle_grouping
+#   agents   — Agents 总览动作: resume, search, new_task, new_worktree, fork,
+#              rename, stop, archive, delete, hide, toggle_pin, toggle_grouping
 #   approval — 审批弹窗动作: open_fullscreen, open_thread, approve,
 #              approve_for_session, approve_for_prefix, deny, decline, cancel
 #
@@ -1625,15 +1660,17 @@ terminal_resize_reflow_max_rows = 9000
 # [tui.keymap.agents]
 # 打开会话恢复选择器 (内置默认键)
 # resume = "o"
-# search = "f"
+# search = ["f3", "/"]
 # new_task = "n" # 在选中项目的当前检出目录中创建会话
 # new_worktree = "w" # 从项目默认分支创建 worktree 会话
+# fork = "f" # 派生选中的会话并打开新会话
 # rename = "r"
 # stop = "x"
 # archive = "a"
 # delete = "backspace"
 # hide = "h"
-# toggle_grouping = "g"
+# toggle_pin = "p" # 置顶或取消置顶选中的任务
+# toggle_grouping = "g" # 在项目、状态、模型分组之间切换
 
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -1900,6 +1937,20 @@ shell_snapshot = true
 # 启用 Fast 模式, 在 TUI 中可切换
 fast_mode = true
 
+# ultrafast_mode — 默认: true | 稳定
+# 启用 Ultra Fast 服务层, 与 fast_mode 独立控制;
+# 当前模型还须在目录中声明支持 ultrafast, 可通过 service_tier 选择
+# ultrafast_mode = true
+
+# api_key_model_discovery — 默认: true | 稳定
+# 为 OpenAI API Key 认证启用远程模型目录发现
+# api_key_model_discovery = true
+
+# api_key_cyber_access_programs — 默认: false | 稳定
+# 使用内置 OpenAI 提供商和 API Key 时, 允许向请求透传显式选择的
+# cyber access program; 仍需账号与模型具有对应访问权限
+# api_key_cyber_access_programs = false
+
 # enable_request_compression — 默认: true | 稳定
 # 对使用 Codex backend 认证的内置 OpenAI provider 请求启用 zstd 压缩;
 # 自定义 provider、普通 API Key 或其他认证路径不因此自动压缩
@@ -2002,13 +2053,23 @@ multi_agent = true
 # disable_direct_message — 类型: 布尔值 | 默认: false
 # 隐藏模型的直接消息工具, 仍允许派生子 Agent 并接收自动返回的结果。
 # 必须同时启用 agent_message_board 并保证本会话的讨论板可用, 否则工具注册失败;
-# 临时会话还需设置下方 message_board_in_memory = true
+# 临时会话需使用下方内存讨论板或远端讨论板
 # multi_agent_v2.disable_direct_message = false
 #
 # message_board_in_memory — 类型: 布尔值 | 默认: false
 # 用于训练会话的内存讨论板, 临时会话也能使用;
 # 仍须启用 multi_agent_v2 和 agent_message_board
 # multi_agent_v2.message_board_in_memory = false
+#
+# message_board_remote — 类型: 对象 (可选) | 默认: 未设置
+# 使用宿主预先提供的会话级远端讨论板; 优先于内存和本地数据库, 临时会话也可用。
+# 仍须启用 multi_agent_v2 和 agent_message_board; 单独配置不会创建服务。
+# url 为必填字符串; bearer_token_env_var / bearer_token 为可选字符串,
+# 运行时必须至少提供一种凭证来源。
+# 环境变量名一旦设置便优先使用, 缺失或无效时直接报错, 不回退到 bearer_token。
+# bearer_token 供宿主通过运行时覆盖传入, 配置文件优先引用环境变量名:
+# multi_agent_v2.message_board_remote.url = "https://board.example.com"
+# multi_agent_v2.message_board_remote.bearer_token_env_var = "CODEX_AGENT_MESSAGE_BOARD_TOKEN"
 #
 # non_code_mode_only — 类型: 布尔值 | 默认: true
 # 是否只把 Multi-Agent V2 工具作为模型直连的顶层工具暴露, 不放入 code mode
@@ -2048,6 +2109,11 @@ plugin_sharing = true
 # 说明: 这是 requirements 管理的能力门禁, 通常不应在用户 config.toml 中手动设置
 # in_app_browser = true
 
+# browser_annotation_api — 默认: true | 稳定
+# 允许网页在桌面应用中打开并定制标注工具; 用户手动标注独立于此开关。
+# 这是 requirements-only 管理门禁, 不应在用户 config.toml 中手动设置
+# browser_annotation_api = true
+
 # in_app_chat — 默认: true | 稳定
 # 允许桌面端显示应用内聊天面板
 # 说明: 这是 requirements-only 管理门禁, 管理员可设为 false;
@@ -2059,6 +2125,11 @@ plugin_sharing = true
 # 说明: 这是 requirements-only 管理门禁, 管理员可设为 false;
 #       不应在用户 config.toml 中手动设置
 # in_app_dictation = true
+
+# in_app_voice — 默认: true | 稳定
+# 允许桌面应用使用 Voice; 此许可本身不代表宿主或提供商已具备语音能力。
+# 这是 requirements-only 管理门禁, 不应在用户 config.toml 中手动设置
+# in_app_voice = true
 
 # in_app_local_automation — 默认: true | 稳定
 # 允许桌面端运行本地自动化任务
@@ -2163,6 +2234,11 @@ memories = true
 # 在 /analytics 中预览个人账号的五小时与每周额度历史
 # analytics_plan_history = false
 
+# login_shell_package_path — 默认: false | 实验
+# 登录 shell 的启动配置重置 PATH 后, 恢复 Codex 随附工具的搜索路径,
+# 让 ripgrep 等内置工具继续可用
+# login_shell_package_path = false
+
 # prevent_idle_sleep — 默认: false | 实验 (macOS/Linux/Windows)
 # 防止系统在 Codex 活跃时进入休眠
 prevent_idle_sleep = true
@@ -2231,21 +2307,37 @@ prevent_idle_sleep = true
 
 # ── 开发中功能 (Under Development) ─────────────────────────────────────────
 
+# cli_daybreak — 默认: false | 开发中
+# 启用 CLI 的 Daybreak 控件与按回合自动选择访问计划的流程;
+# 是否默认开启由顶层 daybreak 决定, 实际访问仍由账号、模型目录和服务端决定
+# cli_daybreak = false
+
 # defer_mailbox_preemption — 默认: false | 开发中
 # 收到 Agent 消息时, 不再在 reasoning / commentary 边界打断当前采样;
 # 待处理消息会在下一个正常输入边界交付
 # defer_mailbox_preemption = false
 
-# instant_interrupt — 默认: false | 开发中
+# instant_interrupt — 默认: true | 开发中
 # 收到新用户输入时抢占正在生成的模型回复, 并让前台等待 code mode
 # 执行结果的调用及时返回, 使模型更早接收并处理补充指令;
 # 已启动的 code mode 执行单元及其嵌套工具会继续在后台运行
-# instant_interrupt = false
+# instant_interrupt = true
 
 # agent_message_board — 默认: false | 开发中
 # 为同一 Agent 树启用共享讨论工具; 还要求 multi_agent_v2 = true。
-# 默认使用状态数据库; 临时会话需设置 multi_agent_v2.message_board_in_memory = true
+# 默认使用状态数据库; 临时会话需配置 multi_agent_v2.message_board_in_memory
+# 或 multi_agent_v2.message_board_remote
 # agent_message_board = false
+
+# model_catalog_in_context — 默认: false | 开发中
+# spawn_agent 暴露模型覆盖参数时, 将可选模型目录作为增量上下文提供,
+# 不再把可变的模型列表嵌入工具说明
+# model_catalog_in_context = false
+
+# multi_agent_v2_dynamic_tools — 默认: false | 开发中
+# 让全新上下文的 V2 子 Agent 继承父会话中由客户端定义的动态工具;
+# 仍须启用 multi_agent_v2
+# multi_agent_v2_dynamic_tools = false
 
 # executed_tool_call_metadata — 默认: false | 开发中
 # 记录模型尝试的直连和 code mode 工具调用名称及参数, 并把有界、必要时截断的
@@ -2291,6 +2383,11 @@ prevent_idle_sleep = true
 # direct_only_tool_namespaces 中的命名空间只作为模型顶层工具暴露:
 # 它们绕过延迟加载, 并从 code_mode 的嵌套工具面中移除
 
+# code_mode_tool_search — 默认: false | 开发中
+# 在 JavaScript code mode 内提供按相关性排序的工具发现;
+# 需同时启用 code_mode
+# code_mode_tool_search = false
+
 # code_mode_prewarm — 默认: false | 开发中
 # 在会话启动时提前建立 code mode 独立宿主连接, 减少首次调用的等待时间;
 # 宿主不可用时不会执行预热
@@ -2303,6 +2400,12 @@ prevent_idle_sleep = true
 # code_mode_only — 默认: false | 开发中
 # 仅向模型暴露 code_mode 入口; 开启本项会自动启用 code_mode
 # code_mode_only = false
+
+# code_mode_only_strict_3p_tools — 默认: false | 开发中
+# 仅在 code_mode_only 下生效: 将符合条件的 MCP、App 和客户端动态工具
+# 保持为 exec 内的延迟工具, 忽略其 deferLoading、omit_tools_from 和命名空间
+# 排除设置; 工具是否启用及调用时的权限检查仍然生效
+# code_mode_only_strict_3p_tools = false
 
 # shell_zsh_fork — 默认: false | 开发中
 # 将 shell 执行路由到 zsh exec bridge
@@ -2324,19 +2427,21 @@ prevent_idle_sleep = true
 # windows_sandbox_service = false
 
 # prefer_mxc — 默认: false | 开发中 (仅 Windows)
-# 本机支持原生 MXC 进程安全环境, 且生效的网络配置未禁止本地端口绑定
-# (allow_local_binding = false) 时, 优先使用 MXC 沙箱; 托管网络约束优先。
+# 本机支持原生 MXC 进程安全环境、requirements 允许选择 mxc, 且生效的
+# 网络配置未禁止本地端口绑定 (allow_local_binding = false) 时, 优先使用
+# MXC 沙箱; 托管网络约束优先。
 # 条件不满足时保留原有后端选择; 该偏好只影响本机, 远程执行器仍继承
 # [windows].sandbox 的配置, 不继承本机自动选择的结果
 # prefer_mxc = false
 
-# api_key_model_discovery — 默认: false | 开发中
-# 为 OpenAI API Key 认证启用远程模型目录发现
-# api_key_model_discovery = false
-
 # deferred_executor — 默认: false | 开发中
 # 允许 turn 在选定的 executor 仍处于启动阶段时先行开始
 # deferred_executor = false
+
+# stable_environment_tools — 默认: false | 开发中
+# 执行器就绪前先发布已启用的环境工具及其 shell 参数, 保持工具声明稳定;
+# 实际执行仍需可用的执行环境并通过对应权限检查
+# stable_environment_tools = false
 
 # cwd_relative_turn_diffs — 默认: false | 开发中
 # 让 turn 的 diff 展示路径相对于当前工作目录, 而不是相对于 Git 根目录
@@ -2346,6 +2451,11 @@ prevent_idle_sleep = true
 # 把延迟加载工具命名空间的增删变化记录到模型可见 world state;
 # 启用后 tool_search 不再重复列出同一份来源清单
 # deferred_tool_world_state = false
+
+# incremental_tools — 默认: false | 开发中
+# 为模型目录中启用 Responses Lite 的模型, 在 world state 中记录顶层工具定义,
+# 并以增量上下文发布变化; 普通 Responses 模型不使用此路径
+# incremental_tools = false
 
 # standalone_web_search — 默认: false | 开发中
 # 通过扩展工具面暴露独立 web_search 工具
@@ -2395,10 +2505,6 @@ prevent_idle_sleep = true
 # apply_patch_streaming_events — 默认: false | 开发中
 # 在生成 apply_patch 输入时流式展示结构化进度
 # apply_patch_streaming_events = false
-
-# apply_patch_preserve_line_endings — 默认: false | 开发中
-# apply_patch 更新现有文件时保留其 CRLF/LF 行尾风格
-# apply_patch_preserve_line_endings = false
 
 # exec_permission_approvals — 默认: false | 开发中 (别名: request_permissions)
 # 允许在沙箱中动态请求额外的文件系统权限审批
@@ -2566,6 +2672,18 @@ prevent_idle_sleep = true
 # persist_scores — 类型: 布尔值 | 默认: false
 # 把已审查动作及风险评分写入非临时会话的 rollout 文件, 仅建议用于调试
 # guardianv2.persist_scores = false
+# transcript_mode — 类型: 字符串 | 默认: "line"
+# 同步审查与异步评分共用的记录编码: "line" 为带编号、角色前缀的原文;
+# "json" 将消息正文转义为 JSON 字符串, 由宿主维护元数据
+# guardianv2.transcript_mode = "line"
+# async_classifier_mode — 类型: 字符串 (可选)
+# 默认: 当前模型目录的设置, 未提供时为 "snapshot"; 每个父任务固定选择一次。
+# "snapshot" 每次使用独立快照; "conversation" 保留异步分类器的增量会话历史
+# guardianv2.async_classifier_mode = "snapshot"
+# async_classifier_conversation_token_limit — 类型: 正整数 | 默认: 100000
+# conversation 模式下一次请求预计超过此 token 数时重置保留的历史;
+# 模型目录可覆盖默认值, 本地设置优先。重置后的新请求仍受模型输入上限约束
+# guardianv2.async_classifier_conversation_token_limit = 100000
 # classifier_instructions — 类型: 字符串 (可选) | 默认: 内置风险分类提示
 # guardianv2.classifier_instructions = "评估工具操作的风险与用户授权范围。"
 # review_threshold — 类型: 浮点数 | 范围: 0.0-1.0
@@ -2577,8 +2695,10 @@ prevent_idle_sleep = true
 # guardianv2.max_tool_call_lag = 2
 # reasoning_effort — 类型: 字符串 | 默认: "low"
 # guardianv2.reasoning_effort = "low"
-# max_action_tokens / max_classifier_instruction_tokens — 默认: 10000 | 范围: 100-100000
+# max_action_tokens — 类型: 整数 | 默认: 10000 | 范围: 100-100000
 # guardianv2.max_action_tokens = 10000
+# max_classifier_instruction_tokens — 类型: 整数 (可选) | 范围: 100-100000
+# 限制配置的分类提示, 不包含固定来源说明; 本地和模型目录均未设置时不截断
 # guardianv2.max_classifier_instruction_tokens = 10000
 # reuse_parent_compaction — 类型: 布尔值 | 默认: true
 # Guardian 审查会话重启时复用父会话的加密 compaction;
@@ -2609,6 +2729,10 @@ prevent_idle_sleep = true
 # guardianv2.transcript.max_tool_transcript_tokens = 10000
 # max_recent_non_user_entries — 类型: 正整数 | 默认: 40
 # guardianv2.transcript.max_recent_non_user_entries = 40
+
+# guardianv2_decisions_comparison — 默认: false | 开发中
+# 在 Guardian V2 旁并行运行 Decisions 作对比测量, 不改变实际审批结论
+# guardianv2_decisions_comparison = false
 
 # retain_client_developer_messages — 默认: false | 开发中
 # 在上下文压缩后保留由客户端写入的 developer 消息
@@ -2689,6 +2813,7 @@ prevent_idle_sleep = true
 # request_rule            — 已移除
 # codex_git_commit        — 已移除
 # apply_patch_freeform    — 已移除
+# apply_patch_preserve_line_endings — 已移除; 补丁更新现有文件时始终保留行尾风格
 # send_async_message      — 已移除; 工具可用性由模型目录或 send_message_to_user_async 决定
 # personality             — 已移除; 不再控制性格选择
 # guardian_ext            — 已移除; 原同步 Guardian Extension 原型不再使用
@@ -2976,7 +3101,8 @@ config = [
 #
 # ── 插件内 MCP server 策略覆盖 ─────────────────────────────────────────────
 # 说明: 插件 manifest 决定 MCP server 如何启动; 宿主配置可覆盖启用状态、
-#       企业认证注册与工具策略
+#       工具可用范围与审批策略。插件 MCP 的 ema_auth 覆盖已不受支持;
+#       遗留此字段会禁用对应服务器
 # [plugins."example-plugin@example-marketplace".mcp_servers.docs]
 # enabled = true
 # default_tools_approval_mode = "prompt"
@@ -2985,19 +3111,6 @@ config = [
 #
 # [plugins."example-plugin@example-marketplace".mcp_servers.docs.tools.search]
 # approval_mode = "approve"
-
-# ── 插件 MCP 企业认证注册 (可选) ──────────────────────────────────────────
-# 前提: 启用 [features].use_xaa 并配置第 21 节的共享企业 IdP。
-# 必须在同一个非项目配置层完整声明, 插件 manifest 不能自行选择企业认证。
-# url / client_id / authorization_server_issuer / resource 为必填字符串;
-# scopes 为可选字符串数组, 默认 []。url 必须匹配插件声明的实际 HTTP 端点,
-# 不会改写插件端点; 不匹配时会禁用该服务器
-# [plugins."example-plugin@example-marketplace".mcp_servers.docs.ema_auth]
-# url = "https://mcp.example.com/docs"
-# client_id = "docs-resource-client"
-# authorization_server_issuer = "https://auth.example.com"
-# resource = "https://mcp.example.com/docs"
-# scopes = ["read:docs"]
 
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -3137,6 +3250,23 @@ base_url = "http://127.0.0.1:8317/v1"
 # wire_api — 类型: 字符串 | 默认: "responses"
 # API 协议: 目前仅支持 "responses"
 wire_api = "responses"
+
+# capabilities — 类型: 对象 (可选)
+# 覆盖自定义 Responses 兼容提供商的可选能力; 省略的字段沿用提供商默认值,
+# 模型、当前回合和托管要求仍可进一步限制可用能力。
+# 使用 dotted key, 使后续认证和重试字段仍属于 [model_providers.custom]
+#
+# external_web_access — 类型: 布尔值 | 自定义 Responses 提供商默认: true
+# 是否允许 hosted web search 实时访问网页; false 时 live / indexed 会降为
+# cached, 或在 cached 不被允许时禁用搜索。这不是通用网络访问开关
+# capabilities.external_web_access = true
+#
+# remote_compaction — 类型: 字符串
+# 默认: 识别为 OpenAI 或 Azure 的提供商使用 "v2", 其他提供商为 "unsupported"
+#   "unsupported" — 使用本地上下文压缩
+#   "v2"          — 通过 Responses 端点发送 compaction_trigger 项;
+#                   自定义网关只有实际支持该协议时才应开启
+# capabilities.remote_compaction = "unsupported"
 
 # env_key — 类型: 字符串 (可选)
 # 存储 API Key 的环境变量名称
