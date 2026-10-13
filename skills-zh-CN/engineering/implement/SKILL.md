@@ -14,4 +14,4 @@ disable-model-invocation: true
 
 编码完成后，调用 Skill 工具并传入 `"code-review"`（`../code-review/SKILL.md`）审查本次变更。等待审查完成，处理所有可执行的问题，并重复审查与修复，直到不再有待处理问题。
 
-将你的工作成果提交（Commit）到当前分支。
+将你的工作成果提交（Commit）到当前分支，随后按照 Issue 追踪系统的工作关闭方式完成所引用的各个 Ticket。

@@ -14,4 +14,4 @@ Run typechecking regularly, single test files regularly, and the full test suite
 
 Once done, call the Skill tool with "code-review" (`../code-review/SKILL.md`) to review the work. Wait for the review to complete, address all actionable findings, and repeat until none remain.
 
-Commit your work to the current branch.
+Commit your work to the current branch, then resolve each referenced ticket the way the issue tracker closes work.
