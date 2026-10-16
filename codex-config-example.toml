@@ -1,8 +1,8 @@
 ###############################################################################
-#                    Codex CLI — config.toml 完整配置参考                      #
+#                    Codex CLI: config.toml 完整配置参考                      #
 #                                                                             #
 #  文件位置: ~/.codex/config.toml (即 $CODEX_HOME/config.toml)                #
-#  适用版本: Codex CLI rust-v0.162.0 (源码提交 c1382380de)                   #
+#  适用版本: Codex CLI rust-v0.163.0 (源码提交 83086188ae)                   #
 #  说    明: 本文件覆盖当前公开 Schema 可见配置项, 并附带详细中文参考         #
 #            尽量标注类型 / 默认值 / 可选值 / 运行时作用                      #
 #            本文件含非默认值和环境相关示例, 使用前请按实际环境审阅              #
@@ -108,8 +108,9 @@ approval_policy = "on-request"
 # 说明: 沙箱决定了模型可以对你的电脑做什么; 未显式设置时, macOS/Linux 上
 #       已记录 trust 状态的项目通常派生为 workspace-write, 未记录时回落到
 #       read-only。Windows 还要求有效的 Windows 沙箱: 可由 [windows].sandbox
-#       显式选择, 或由 [features].prefer_mxc 在本机满足条件时自动选择;
-#       否则 workspace-write 即使显式设置也会降级为 read-only
+#       显式选择, 或由 [features].prefer_mxc 在本机满足条件时自动选择。
+#       windows.allow_mxc = false 会同时禁止这两种 MXC 选择路径。
+#       没有有效的 Windows 沙箱时, workspace-write 即使显式设置也会降级为 read-only
 sandbox_mode = "workspace-write"
 
 # ── allow_symlinked_codex_home ────────────────────────────────────────────
@@ -189,8 +190,10 @@ service_tier = "priority"
 # 作用: 为新线程与非交互回合设置 Daybreak 偏好
 # 说明: CLI 还需启用 [features].cli_daybreak, 并由所连接服务的模型目录确认
 #       当前账号和模型支持 Daybreak。仅适用于内置 openai 提供商;
-#       TUI 支持 ChatGPT 登录, 或启用 api_key_cyber_access_programs 后使用
-#       具备相应权限的 API Key; 非交互 exec 自动启用 Daybreak 时要求 ChatGPT 登录。
+#       TUI 与非交互 exec 均支持 ChatGPT 登录, 或启用
+#       api_key_cyber_access_programs 后使用具备相应权限的 OpenAI API Key。
+#       rust-v0.163.0 起, 上述两个功能标志均默认启用; 顶层 daybreak 偏好
+#       仍默认 false, 功能标志开启本身不代表账号已获得 Daybreak 访问权限。
 #       TUI 可通过 /daybreak 切换并保存选择; 恢复会话时优先使用会话中
 #       保存的偏好, 命令行 -c daybreak=... 可显式覆盖
 # daybreak = false
@@ -325,11 +328,11 @@ background_terminal_max_timeout = 300000
 
 # ── thread_unload_delay_secs ──────────────────────────────────────────────
 # 类型: 非负整数 (秒) (可选)
-# 默认: 60
+# 默认: 1800 (30 分钟)
 # 作用: app-server 在线程没有订阅者且无活动持续达到此时长后卸载线程
 # 说明: 0 表示满足条件后立即卸载; 修改后需要重启 app-server。
 #       超出平台计时器可表示范围的数值会导致配置加载失败
-thread_unload_delay_secs = 60
+thread_unload_delay_secs = 1800
 
 # ── tool_output_token_limit ────────────────────────────────────────────────
 # 类型: 整数 (可选)
@@ -522,8 +525,17 @@ include_collaboration_mode_instructions = true
 # 类型: 布尔值 (可选)
 # 默认: true
 # 作用: 是否注入 <environment_context> 用户上下文块
-# 说明: 这个上下文会告诉模型当前工作目录、shell、时间、时区等运行环境信息
+# 说明: 这个上下文会告诉模型当前工作目录、shell、当前日期和时区等运行环境信息;
+#       日期和时区还受下方 include_environment_context_time 控制
 include_environment_context = true
+
+# ── include_environment_context_time ──────────────────────────────────────
+# 类型: 布尔值 (可选)
+# 默认: true
+# 作用: 是否在环境上下文中包含当前日期和时区
+# 说明: 设为 false 时仍可保留工作目录、shell 等其他环境信息;
+#       include_environment_context = false 时不会注入整个环境上下文块
+include_environment_context_time = true
 
 # ── instructions ───────────────────────────────────────────────────────────
 # 类型: 字符串 (可选)
@@ -705,10 +717,13 @@ project_root_markers = [".git", "package.json", "go.mod", "pyproject.toml"]
 # realtime.transport = "webrtc"
 
 # voice — 类型: 字符串 (可选) | 配置默认: 未设置
-# v1/v3: "juniper" | "maple" | "spruce" | "ember" | "vale" | "breeze" |
+# v1:    "juniper" | "maple" | "spruce" | "ember" | "vale" | "breeze" |
 #        "arbor" | "sol" | "cove"; 运行时默认 "cove"
 # v2:    "alloy" | "ash" | "ballad" | "coral" | "echo" | "sage" |
 #        "shimmer" | "verse" | "marin" | "cedar"; 运行时默认 "marin"
+# v3:    支持全部 v1 人声, 并新增 "aube" | "bubbie" | "haetsal" | "hanul" |
+#        "himari" | "leher" | "miko" | "neer" | "porto" | "rindo" | "rio" |
+#        "rivage" | "selva" | "sonna" | "tinta" | "viola"; 运行时默认 "cove"
 # 选择实时语音输出的人声; 跨版本使用不支持的 voice 会返回 InvalidRequest。
 # WebRTC 未显式指定版本时会忽略此配置并使用实际版本的内置默认语音
 # realtime.voice = "cedar"
@@ -815,10 +830,11 @@ project_root_markers = [".git", "package.json", "go.mod", "pyproject.toml"]
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 # ── [analytics] — 数据分析 ──────────────────────────────────────────────────
-# 作用: 控制 Codex 各产品界面的分析数据收集
+# 作用: 控制 Codex 各产品界面的 OpenAI 分析数据收集
 [analytics]
 # enabled — 类型: 布尔值 (可选) | 默认: 未设置, 由客户端决定
-# 显式设为 false 可禁用 Codex 产品界面的分析数据收集
+# 显式设为 false 可禁用 OpenAI 分析及内置 Statsig 指标导出。
+# 自定义 OTLP 指标导出独立于本项; 如需关闭, 请设置 otel.metrics_exporter = "none"
 # enabled = true
 
 # ── [feedback] — 反馈收集 ──────────────────────────────────────────────────
@@ -887,6 +903,10 @@ max_bytes = 10485760
 # 说明: 这些值通常由 Codex 自动写入, 一般不需要手动修改
 
 [notice]
+# hide_gov_cloud_guidance: 类型: 布尔值 | 默认: false
+# 是否已确认 AWS GovCloud 使用指引; 通常由 Codex 自动维护
+# hide_gov_cloud_guidance = false
+
 # hide_full_access_warning — 类型: 布尔值 | 默认: false
 # 是否已确认 danger-full-access 沙箱模式的风险警告
 hide_full_access_warning = false
@@ -945,6 +965,12 @@ model_migrations = { "gpt-5.3-codex" = "gpt-5.4" }
 # 作用: 配置 Windows 平台上的沙箱实现方式
 
 [windows]
+# allow_mxc: 类型: 布尔值 (可选) | 默认: true
+# 设为 false 时禁止显式和自动选择 MXC; 同时设置 sandbox = "mxc" 会报错。
+# requirements.toml 若要求 windows.require_mxc = true, 最终必须选中 MXC,
+# 否则启动校验失败; 本项不能绕过管理员要求
+# allow_mxc = true
+
 # sandbox — 类型: 字符串 | 配置默认: 无
 # 可选值:
 #   "elevated"   — 提权沙箱: 首次运行时需要管理员权限来创建受限沙箱用户并配置
@@ -954,7 +980,8 @@ model_migrations = { "gpt-5.3-codex" = "gpt-5.4" }
 #   "mxc"        — 使用 Windows MXC 沙箱实现; 需要执行宿主提供对应运行支持
 # 说明: 仅在 Windows 上生效; macOS/Linux 使用其他沙箱机制。未设置且未通过
 #       其他机制选择有效后端时, Windows 沙箱保持禁用。
-#       [features].prefer_mxc = true 可在本机满足条件时优先选择 MXC;
+#       [features].prefer_mxc = true 可在本机满足条件且 allow_mxc 未关闭时
+#       优先选择 MXC;
 #       该偏好不改写此配置, 远程执行器仍继承显式配置的后端
 #       requirements 对可用后端的限制优先; 显式选择被禁止的 mxc 会报错,
 #       自动选择也不会绕过该限制
@@ -1259,6 +1286,9 @@ enabled = true
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 [tui]
+# rust-v0.163.0 起可通过 /config 跨类别搜索并修改支持的偏好;
+# 支持即时生效的设置会立即应用, 其他设置会提示是否需要重启
+
 # alternate_screen — 类型: 字符串 | 默认: "auto"
 # 可选值:
 #   "auto"   — 使用备用屏幕 (当前行为与 "always" 相同)
@@ -1280,7 +1310,7 @@ fullscreen_transcript = true
 # mouse_scroll_speed = 1.0
 
 # copy_on_select — 类型: 字符串 | 默认: "auto"
-# 控制全屏对话记录中的鼠标选择是否在松开按钮时自动复制。
+# 控制对话记录或底部栏中的鼠标选择是否在松开按钮时自动复制。
 # 可选值:
 #   "auto"   — 按终端选择; 直接运行于 Ghostty 1.2+、macOS Kitty、
 #                Windows Terminal 或 Windows VS Code 时默认不自动复制;
@@ -1291,6 +1321,11 @@ fullscreen_transcript = true
 # 环境会把鼠标选区同步为纯文本 PRIMARY 选择, 即使设置为 "never" 也可用;
 # Wayland、SSH、tmux、WSL 和已识别的 VS Code 终端不使用此 PRIMARY 集成
 copy_on_select = "auto"
+
+# copy_on_select_clear_selection: 类型: 布尔值 | 默认: false
+# 自动复制确认已送达剪贴板后, 清除对话记录中的选区。
+# 关闭自动复制时不生效; 不影响显式复制操作
+copy_on_select_clear_selection = false
 
 # right_click_paste — 类型: 字符串 | 默认: "auto"
 # 控制全屏 TUI 无选区时的右键文本粘贴; 不改变终端自身的粘贴快捷键。
@@ -1513,14 +1548,20 @@ terminal_resize_reflow_max_rows = 9000
 #   - 单键或最多两段 chord: action = "ctrl-a" / action = "ctrl-x ctrl-s"
 #   - 多个候选绑定: action = ["ctrl-a", "alt-a"] (数组元素彼此替代, 不是 chord)
 #   - 空数组: action = [] 表示显式解绑, 不再回退到全局或内置默认值
+#   - 前导键写法: action = "leader t", 跟随 [tui.keymap.global].leader 的配置
 # 支持按键:
 #   普通 ASCII 字符、f1-f24、enter、tab、backspace、esc、delete、up/down/left/right、
 #   home/end、page-up/page-down、space; 修饰键写在前面: ctrl-、alt-、shift-。
 #   连字符的名称是 minus; 带修饰键时写作 alt-minus、ctrl-minus 等。
 #   两段 chord 用一个空格分隔, 每一段都使用相同的按键语法
+# leader: 类型: 字符串或字符串数组 | 内置默认: "ctrl-x"
+#   每个候选只能是一个前导按键, 不能设置为 chord; 普通字符必须带 ctrl 或 alt。
+#   前导键打开当前上下文的快捷键菜单, 提示会保留到选择或取消;
+#   leader = [] 可禁用。未显式设置 leader 且 ctrl-x 已被自定义绑定使用时,
+#   内置前导键会让位。可通过 /keymap 交互配置
 #
 # 常用上下文:
-#   global   — 全局动作: open_agents, open_transcript, open_external_editor, copy,
+#   global: 全局动作: leader, open_agents, open_transcript, open_external_editor, copy,
 #              clear_terminal, submit, queue, toggle_shortcuts,
 #              toggle_vim_mode, toggle_fast_mode, toggle_raw_output,
 #              toggle_side_conversation, find_transcript, focus_activity
@@ -1568,11 +1609,12 @@ terminal_resize_reflow_max_rows = 9000
 #              approve_for_session, approve_for_prefix, deny, decline, cancel
 #
 # [tui.keymap.global]
+# leader = "ctrl-x"
 # open_agents = "alt-a"
-# open_transcript = "ctrl-t"
+# open_transcript = "leader t" # 自定义为前导键后按 t
 # find_transcript = "f3" # 搜索完整对话记录 (内置默认键)
 # focus_activity = "f4" # 聚焦全屏对话中的活动组 (内置默认键)
-# open_external_editor = "ctrl-x ctrl-e"
+# open_external_editor = "leader e" # 自定义绑定; 内置默认键为 ctrl-g
 # copy = ["ctrl-y", "alt-y"]
 # toggle_side_conversation = "f12"
 # 内置默认键是 ctrl-/, 并把终端可能上报的 ctrl-7 视为兼容别名;
@@ -1583,7 +1625,7 @@ terminal_resize_reflow_max_rows = 9000
 # previous_permission_mode = "f7"
 # next_permission_mode = "f6"
 # toggle_voice = "f8" # 启动或结束语音对话 (内置默认键)
-# toggle_voice_mute = "f9"
+# toggle_voice_mute = "f9" # 静音或取消静音 (内置默认键)
 # 先向上浏览待处理的异步问题, 再编辑最后一条排队消息 (以下为内置默认键)
 # edit_queued_message = ["alt-up", "shift-left"]
 # 反向浏览问题, 逐步返回聊天输入框
@@ -1923,6 +1965,10 @@ write_stdin_approval = true
 # false 允许可选 code mode 退回直连工具。code_mode_only 始终保持 fail-closed
 # code_mode_host.disable_in_process_fallback = false
 
+# code_mode_interrupt: 默认: true | 稳定
+# turn 被中断时终止正在运行的 code mode cell 及其嵌套工具调用
+# code_mode_interrupt = true
+
 # content_item_kinds — 默认: true | 稳定
 # 在内部 Responses metadata 中传递每个内容项的分类信息
 # content_item_kinds = true
@@ -1946,10 +1992,15 @@ fast_mode = true
 # 为 OpenAI API Key 认证启用远程模型目录发现
 # api_key_model_discovery = true
 
-# api_key_cyber_access_programs — 默认: false | 稳定
+# cli_daybreak: 默认: true | 稳定
+# 启用 CLI 的 Daybreak 控件与按回合选择访问计划的流程;
+# 顶层 daybreak 控制是否选择 Daybreak, 实际访问仍由账号、模型目录和服务端决定
+# cli_daybreak = true
+
+# api_key_cyber_access_programs: 默认: true | 稳定
 # 使用内置 OpenAI 提供商和 API Key 时, 允许向请求透传显式选择的
 # cyber access program; 仍需账号与模型具有对应访问权限
-# api_key_cyber_access_programs = false
+# api_key_cyber_access_programs = true
 
 # enable_request_compression — 默认: true | 稳定
 # 对使用 Codex backend 认证的内置 OpenAI provider 请求启用 zstd 压缩;
@@ -2025,6 +2076,11 @@ multi_agent = true
 # 角色专属 developer instructions 的优先级更高
 # multi_agent_v2.subagent_developer_instructions = "只处理委派范围, 并用简洁中文汇报结果。"
 #
+# preserve_fork_prefix: 类型: 布尔值 | 默认: false
+# 完整 fork 时保留父 Agent 的模型可见历史前缀, 并追加子 Agent 指令;
+# 旧式压缩没有可复用的上下文基线时仍会重建历史
+# multi_agent_v2.preserve_fork_prefix = false
+#
 # multi_agent_mode_hint_text — 类型: 字符串 (可选) | 默认: 无
 # 自定义多 Agent 模式提示; 设置后覆盖按 reasoning effort 推导的内置模式
 # 空字符串也视为显式自定义值
@@ -2049,6 +2105,10 @@ multi_agent = true
 # wait_agent_enabled — 类型: 布尔值 | 默认: true
 # 是否暴露 wait_agent 工具; 设为 false 会从 Multi-Agent V2 工具面中移除它
 # multi_agent_v2.wait_agent_enabled = true
+#
+# disable_native_tools: 类型: 布尔值 | 默认: false
+# 隐藏内置 Multi-Agent V2 工具, 同时保留 V2 运行时供宿主提供的工具使用
+# multi_agent_v2.disable_native_tools = false
 #
 # disable_direct_message — 类型: 布尔值 | 默认: false
 # 隐藏模型的直接消息工具, 仍允许派生子 Agent 并接收自动返回的结果。
@@ -2307,10 +2367,22 @@ prevent_idle_sleep = true
 
 # ── 开发中功能 (Under Development) ─────────────────────────────────────────
 
-# cli_daybreak — 默认: false | 开发中
-# 启用 CLI 的 Daybreak 控件与按回合自动选择访问计划的流程;
-# 是否默认开启由顶层 daybreak 决定, 实际访问仍由账号、模型目录和服务端决定
-# cli_daybreak = false
+# async_compaction: 默认: false | 开发中
+# 在达到前台压缩限制前, 按模型完整上下文窗口的使用比例启动后台远端压缩。
+# 仅在提供商支持远端 V2 压缩且未启用 token_budget 时生效;
+# 单独设置阈值不会启用此功能。以下布尔写法与对象写法择一:
+# async_compaction = false
+# async_compaction.enabled = true
+# model_async_compact_threshold_percent: 类型: 整数 | 默认: 65 | 范围: 1-100
+# 即使功能关闭也会校验范围; 此阈值不会修改前台自动压缩或回合结束压缩阈值
+# async_compaction.model_async_compact_threshold_percent = 65
+
+# credential_masking: 默认: false | 开发中
+# 在已启用的托管网络代理中启用凭据代理, 让沙箱命令使用别名,
+# 再由代理向受信 HTTPS 端点注入真实凭据; 自定义凭据来自 network_proxy.credentials。
+# 本项不会自动启用网络代理, 也不授予网络权限; 关闭沙箱、未启用代理,
+# 或 shell 环境覆盖包含大小写不敏感的凭据键冲突时, 脱敏不会生效
+# credential_masking = false
 
 # defer_mailbox_preemption — 默认: false | 开发中
 # 收到 Agent 消息时, 不再在 reasoning / commentary 边界打断当前采样;
@@ -2338,6 +2410,11 @@ prevent_idle_sleep = true
 # 让全新上下文的 V2 子 Agent 继承父会话中由客户端定义的动态工具;
 # 仍须启用 multi_agent_v2
 # multi_agent_v2_dynamic_tools = false
+
+# subagent_default_context_limits: 默认: false | 开发中
+# 为子 Agent 清除继承的 model_context_window 和 model_auto_compact_token_limit
+# 覆盖, 改用该子 Agent 模型自身的默认上下文窗口和自动压缩阈值
+# subagent_default_context_limits = false
 
 # executed_tool_call_metadata — 默认: false | 开发中
 # 记录模型尝试的直连和 code mode 工具调用名称及参数, 并把有界、必要时截断的
@@ -2383,19 +2460,23 @@ prevent_idle_sleep = true
 # direct_only_tool_namespaces 中的命名空间只作为模型顶层工具暴露:
 # 它们绕过延迟加载, 并从 code_mode 的嵌套工具面中移除
 
+# code_mode_host_grpc: 默认: false | 开发中
+# 通过标准输入输出上的 gRPC 与进程自有的独立 code mode 宿主通信
+# code_mode_host_grpc = false
+
 # code_mode_tool_search — 默认: false | 开发中
 # 在 JavaScript code mode 内提供按相关性排序的工具发现;
 # 需同时启用 code_mode
 # code_mode_tool_search = false
 
+# code_mode_tool_description_first: 默认: false | 开发中
+# 在 code mode 工具说明中, 先呈现每个工具的描述, 再呈现所属命名空间的描述
+# code_mode_tool_description_first = false
+
 # code_mode_prewarm — 默认: false | 开发中
 # 在会话启动时提前建立 code mode 独立宿主连接, 减少首次调用的等待时间;
 # 宿主不可用时不会执行预热
 # code_mode_prewarm = false
-
-# code_mode_interrupt — 默认: false | 开发中
-# turn 被中断时终止正在运行的 code mode cell 及其嵌套工具调用
-# code_mode_interrupt = false
 
 # code_mode_only — 默认: false | 开发中
 # 仅向模型暴露 code_mode 入口; 开启本项会自动启用 code_mode
@@ -2406,10 +2487,6 @@ prevent_idle_sleep = true
 # 保持为 exec 内的延迟工具, 忽略其 deferLoading、omit_tools_from 和命名空间
 # 排除设置; 工具是否启用及调用时的权限检查仍然生效
 # code_mode_only_strict_3p_tools = false
-
-# shell_zsh_fork — 默认: false | 开发中
-# 将 shell 执行路由到 zsh exec bridge
-# shell_zsh_fork = false
 
 # shell_snapshot_v2 — 默认: false | 开发中
 # 把经过策略过滤的 shell 快照完全保存在 executor 内存中,
@@ -2427,9 +2504,9 @@ prevent_idle_sleep = true
 # windows_sandbox_service = false
 
 # prefer_mxc — 默认: false | 开发中 (仅 Windows)
-# 本机支持原生 MXC 进程安全环境、requirements 允许选择 mxc, 且生效的
-# 网络配置未禁止本地端口绑定 (allow_local_binding = false) 时, 优先使用
-# MXC 沙箱; 托管网络约束优先。
+# 本机支持原生 MXC 进程安全环境、[windows].allow_mxc 未关闭、requirements
+# 允许选择 mxc, 且生效的网络配置未禁止本地端口绑定
+# (allow_local_binding = false) 时, 优先使用 MXC 沙箱; 托管网络约束优先。
 # 条件不满足时保留原有后端选择; 该偏好只影响本机, 远程执行器仍继承
 # [windows].sandbox 的配置, 不继承本机自动选择的结果
 # prefer_mxc = false
@@ -2471,6 +2548,10 @@ prevent_idle_sleep = true
 # concurrent_reasoning_summaries — 默认: false | 开发中
 # 请求按顺序发送截止点 reasoning summary
 # concurrent_reasoning_summaries = false
+
+# output_token_replay: 默认: false | 开发中
+# 向 OpenAI 请求额外的 output.encrypted_content, 用于保留采样 token 的加密回放
+# output_token_replay = false
 
 # chronicle — 默认: false | 开发中 (历史别名: telepathy)
 # 启用 Chronicle sidecar, 以被动屏幕上下文的形式扩展记忆能力
@@ -2651,6 +2732,11 @@ prevent_idle_sleep = true
 # 把已完成的 node_repl/code mode 响应图片也加入 Guardian 审查 transcript
 # guardian_node_repl_transcript_images = false
 
+# guardian_trust_orchestrator_connectors: 默认: false | 开发中
+# Guardian V2 信任插件服务 orchestrator 提供的非空 connector 身份作为工具来源证据;
+# 本项不直接批准工具调用, 审批仍由 Guardian 审查决定
+# guardian_trust_orchestrator_connectors = false
+
 # guardian_conversation_history_tools — 默认: false | 开发中
 # 为 Guardian 审批审查提供 user_message.search_messages / read_messages,
 # 用于查证更早的用户指令、授权及限制; 同时需要 apps = true, 并由宿主 Apps
@@ -2737,6 +2823,11 @@ prevent_idle_sleep = true
 # retain_client_developer_messages — 默认: false | 开发中
 # 在上下文压缩后保留由客户端写入的 developer 消息
 # retain_client_developer_messages = false
+
+# retain_client_tool_outputs: 默认: false | 开发中
+# 在上下文压缩后保留客户端标记的具名、无 call_id 的函数输出;
+# 与普通历史共享 token 预算, 以完整保留或整项丢弃的方式处理
+# retain_client_tool_outputs = false
 
 # non_prefixed_mcp_tool_names — 默认: false | 开发中
 # 使用规范对象写法, 可为全部或指定 MCP 服务器去掉历史 mcp__ 前缀
@@ -2842,7 +2933,8 @@ prevent_idle_sleep = true
 # plugin_hooks                  — 已移除 (插件 hooks 不再由 feature flag 控制)
 # enable_fanout                 — 已移除 (CSV-backed Agent jobs 已删除)
 # code_mode_buffered_exec       — 已移除; 请改用 code_mode.default_exec_yield_time_ms
-# unified_exec_zsh_fork         — 已移除; unified_exec 的 shell 执行已统一
+# shell_zsh_fork / unified_exec_zsh_fork: 已移除且忽略, 应从配置中删除;
+# patched zsh 后端已移除, shell 命令统一使用标准 shell 执行器
 
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -3094,9 +3186,15 @@ config = [
 #         下划线和连字符, 但点不能位于首尾或连续出现; <marketplace> 只能包含
 #         ASCII 字母、数字、下划线和连字符。因为含 @, 整个键需用 TOML 引号包裹
 
+# [plugins._default]
+# enabled: 类型: 布尔值 | 表存在时默认: true; 省略本表则沿用安装来源的启用状态
+# 为已安装插件设置默认启用策略; false 时仅启用下方逐插件显式开启的插件。
+# 本表与逐插件配置均不能重新启用被安装来源禁用的插件
+# enabled = true
+#
 # [plugins."example-plugin@example-marketplace"]
-# enabled — 类型: 布尔值 | 默认: true
-# 是否加载这个插件
+# enabled: 类型: 布尔值 (可选) | 默认: 继承已安装插件的默认策略
+# 是否加载这个插件; 显式设置会覆盖 [plugins._default].enabled
 # enabled = true
 #
 # ── 插件内 MCP server 策略覆盖 ─────────────────────────────────────────────
@@ -3799,9 +3897,11 @@ beta = "two"
 # exporter         — 日志导出器 | 默认: "none"
 # trace_exporter   — 链路追踪导出器 | 默认: "none" (不跟随 exporter)
 # metrics_exporter — 指标导出器 | 配置默认: "statsig"
-# 说明: analytics.enabled = false 会强制禁用指标导出; 未设置 analytics.enabled
-#       时由宿主默认决定。启用 debug_assertions 的构建 (通常为 debug/test)
-#       会把内置 Statsig 默认解析为 none; release 构建仍使用 Statsig
+# 说明: analytics.enabled = false 只禁用内置 Statsig 指标导出, 不关闭自定义
+#       OTLP 指标导出; 若要禁用所有指标导出, 请设置 metrics_exporter = "none"。
+#       未设置 analytics.enabled 时, 内置指标是否启用由宿主默认决定。
+#       启用 debug_assertions 的构建 (通常为 debug/test) 会把内置 Statsig
+#       默认解析为 none; release 构建仍使用 Statsig
 
 # ── 自定义 OTLP-HTTP 链路追踪导出器 ────────────────────────────────────────
 [otel.trace_exporter.otlp-http]
