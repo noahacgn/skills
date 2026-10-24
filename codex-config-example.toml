@@ -2,7 +2,7 @@
 #                    Codex CLI: config.toml 完整配置参考                      #
 #                                                                             #
 #  文件位置: ~/.codex/config.toml (即 $CODEX_HOME/config.toml)                #
-#  适用版本: Codex CLI rust-v0.163.0 (源码提交 83086188ae)                   #
+#  适用版本: Codex CLI rust-v0.164.0 (源码提交 6aaac69480)                   #
 #  说    明: 本文件覆盖当前公开 Schema 可见配置项, 并附带详细中文参考         #
 #            尽量标注类型 / 默认值 / 可选值 / 运行时作用                      #
 #            本文件含非默认值和环境相关示例, 使用前请按实际环境审阅              #
@@ -330,8 +330,9 @@ background_terminal_max_timeout = 300000
 # 类型: 非负整数 (秒) (可选)
 # 默认: 1800 (30 分钟)
 # 作用: app-server 在线程没有订阅者且无活动持续达到此时长后卸载线程
-# 说明: 0 表示满足条件后立即卸载; 修改后需要重启 app-server。
-#       超出平台计时器可表示范围的数值会导致配置加载失败
+# 说明: 0 表示满足条件后立即卸载; 每次加载线程时解析, 请求级配置覆盖按线程生效。
+#       已加载线程的计时不会因修改配置立即重算; 超出平台计时器可表示范围的数值
+#       会导致配置加载失败
 thread_unload_delay_secs = 1800
 
 # ── tool_output_token_limit ────────────────────────────────────────────────
@@ -558,14 +559,17 @@ include_environment_context_time = true
 # ── log_dir ────────────────────────────────────────────────────────────────
 # 类型: 路径 (可选)
 # 默认: $CODEX_HOME/log
-# 作用: 日志文件存储目录; 显式设置后也会启用 TUI 文本日志写入该目录
-# 说明: requirements.toml 可以强制此路径, 用户配置无法覆盖
+# 作用: 日志文件存储目录; 显式设置后也会启用 TUI 文本日志, 并把 SQLite 日志
+#       数据库写入该目录。未显式设置时, SQLite 日志仍使用 sqlite_home
+# 说明: requirements.toml 可以强制此路径, 用户配置无法覆盖。
+#       托管要求指定 sqlite_home 时, SQLite 日志继续写入该强制目录;
+#       原 sqlite_home 中已有的日志数据库不会自动移动
 # log_dir = 'C:\Users\you\.codex\log'
 
 # ── sqlite_home ────────────────────────────────────────────────────────────
 # 类型: 路径 (可选)
 # 默认: $CODEX_SQLITE_HOME 环境变量; 若未设置则为 $CODEX_HOME
-# 作用: SQLite 状态数据库的存储目录
+# 作用: SQLite 状态数据库的存储目录; 未显式设置 log_dir 时也用于 SQLite 日志
 # 说明: requirements.toml 可以强制此路径, 并覆盖用户配置和
 #       $CODEX_SQLITE_HOME 环境变量
 # sqlite_home = 'C:\Users\you\.codex\sqlite'
@@ -838,10 +842,11 @@ project_root_markers = [".git", "package.json", "go.mod", "pyproject.toml"]
 # enabled = true
 
 # ── [feedback] — 反馈收集 ──────────────────────────────────────────────────
-# 作用: 控制 Codex 是否弹出反馈收集界面
+# 作用: 控制反馈上传及后台 Guardian 审查记录的保留
 [feedback]
 # enabled — 类型: 布尔值 | 默认: true
-# 设为 false 可禁用反馈收集流程; requirements.toml 可以强制此值
+# 设为 false 可禁用反馈上传和后台 Guardian 审查记录保留;
+# 用户主动导出本地诊断仍可用。requirements.toml 可以强制此值
 enabled = true
 
 # ── [audio] — 实时语音设备 ──────────────────────────────────────────────────
@@ -1094,7 +1099,8 @@ set = { LANG = "en_US.UTF-8" }
 version = "v1"
 
 # dual_write — 类型: 布尔值 | 默认: false
-# 在选定版本继续提供上下文的同时, 后台同时生成 v1 与 v2 记忆
+# version = "v1" 时同时生成 v1 与 v2 记忆, 仍由 v1 提供上下文;
+# version = "v2" 时只运行 v2, 即使本项为 true 也不会继续生成 v1
 dual_write = false
 
 # generate_memories — 类型: 布尔值 | 默认: true
@@ -1310,7 +1316,7 @@ fullscreen_transcript = true
 # mouse_scroll_speed = 1.0
 
 # copy_on_select — 类型: 字符串 | 默认: "auto"
-# 控制对话记录或底部栏中的鼠标选择是否在松开按钮时自动复制。
+# 控制对话记录、底部栏或输入框中的鼠标选择是否在松开按钮时自动复制。
 # 可选值:
 #   "auto"   — 按终端选择; 直接运行于 Ghostty 1.2+、macOS Kitty、
 #                Windows Terminal 或 Windows VS Code 时默认不自动复制;
@@ -1323,8 +1329,8 @@ fullscreen_transcript = true
 copy_on_select = "auto"
 
 # copy_on_select_clear_selection: 类型: 布尔值 | 默认: false
-# 自动复制确认已送达剪贴板后, 清除对话记录中的选区。
-# 关闭自动复制时不生效; 不影响显式复制操作
+# 自动复制确认已送达剪贴板后, 清除只读对话记录或底部栏中的选区。
+# 可编辑输入框中的选区仍会保留; 关闭自动复制时不生效, 不影响显式复制操作
 copy_on_select_clear_selection = false
 
 # right_click_paste — 类型: 字符串 | 默认: "auto"
@@ -1542,6 +1548,23 @@ terminal_resize_reflow_max_rows = 9000
 # 记录每个模型的可用性引导已显示次数 (由 Codex 自动管理, 一般不需要手动修改)
 # model_availability_nux = {}
 
+# ── [tui.presets] ── 编号输入预设 ─────────────────────────────────────────
+# 类型: 编号到预设对象的映射 | 默认: {} (空)
+# 作用: 保存可重复提交的纯文本提示词或斜杠命令, 通过 /presets 管理。
+# 编号必须是单个数字 "0" 至 "9"; input 为必填字符串, 不能为空白、不能以 !
+# 开头执行 shell 命令, UTF-8 编码长度最多 8000 字节; label 是可选显示名称。
+# 内置入口为 leader p (默认 ctrl-x 后按 p), 打开后按数字调用;
+# 若快捷键冲突或被显式解绑, 不会自动注入该入口, 可配置 chat.open_presets。
+# /model 和 /permissions 还支持内联参数, 可把常用选择保存为预设。
+# 每个示例需连同表头一起取消注释, 后续其他 TUI 键需放回 [tui] 表作用域:
+# [tui.presets."1"]
+# label = "检查改动"
+# input = "检查当前改动, 找出可能影响正确性的问题, 并用简体中文汇报。"
+#
+# [tui.presets."2"]
+# label = "高推理模型"
+# input = "/model gpt-5.6-sol high"
+
 # ── [tui.keymap] — TUI 快捷键覆盖 ─────────────────────────────────────────
 # 作用: 覆盖 TUI 内置快捷键; 缺失项继承内置默认值
 # 写法:
@@ -1551,7 +1574,8 @@ terminal_resize_reflow_max_rows = 9000
 #   - 前导键写法: action = "leader t", 跟随 [tui.keymap.global].leader 的配置
 # 支持按键:
 #   普通 ASCII 字符、f1-f24、enter、tab、backspace、esc、delete、up/down/left/right、
-#   home/end、page-up/page-down、space; 修饰键写在前面: ctrl-、alt-、shift-。
+#   home/end、page-up/page-down、space; 修饰键写在前面: ctrl-、alt-、shift-、super-。
+#   cmd- / command- 会规范化为 super-; 终端需实际传递相应修饰键信息。
 #   连字符的名称是 minus; 带修饰键时写作 alt-minus、ctrl-minus 等。
 #   两段 chord 用一个空格分隔, 每一段都使用相同的按键语法
 # leader: 类型: 字符串或字符串数组 | 内置默认: "ctrl-x"
@@ -1565,7 +1589,7 @@ terminal_resize_reflow_max_rows = 9000
 #              clear_terminal, submit, queue, toggle_shortcuts,
 #              toggle_vim_mode, toggle_fast_mode, toggle_raw_output,
 #              toggle_side_conversation, find_transcript, focus_activity
-#   chat     — 聊天区动作: increase_reasoning_effort, decrease_reasoning_effort,
+#   chat: 聊天区动作: open_presets, increase_reasoning_effort, decrease_reasoning_effort,
 #              previous_permission_mode, next_permission_mode, toggle_voice,
 #              toggle_voice_mute,
 #              edit_queued_message, prompt_stack_back, skip_question, interrupt_turn
@@ -1621,6 +1645,7 @@ terminal_resize_reflow_max_rows = 9000
 # 若用户把该键显式分配给其他动作, 默认切换键会让位
 #
 # [tui.keymap.chat]
+# open_presets = "leader p"
 # interrupt_turn = "esc"
 # previous_permission_mode = "f7"
 # next_permission_mode = "f6"
@@ -1861,26 +1886,37 @@ terminal_resize_reflow_max_rows = 9000
 # [permissions.<profile>.network.mitm]
 # 作用: 配置 HTTPS MITM hook; 当 mode = "limited" 或存在 MITM hook 时自动启用 MITM
 # 说明: hook 在 HTTPS CONNECT 被终止后匹配请求, action 可复用并可被更高优先级配置覆盖
-# 示例 (独立 full 模式 profile; limited 模式会拒绝下方 POST/PUT):
+# version: 可选整数, 当前只接受 2; 使用 schemes / ports 或 placeholder 时必须设置。
+# schemes: 字符串数组, 仅接受 http / https; ports: 1-65535 的整数数组。
+# 两个数组默认均为空, 表示不限制对应维度; 凭据占位符替换仅支持 HTTPS 的 443 端口。
+# 注入宿主凭据的规则须放在非项目配置层; 项目配置不能新增凭据注入, 也不能改写
+# 受信 MITM 规则或其继承关系。hook、action 和注入头中的未知键会导致加载失败。
+# 示例 (用户级配置中的独立 full 模式 profile; limited 模式会拒绝下方 POST/PUT):
 #   [permissions.mitm_example]
 #   [permissions.mitm_example.network]
 #   enabled = true
 #   mode = "full"
+#   [permissions.mitm_example.network.mitm]
+#   version = 2
 #   [permissions.mitm_example.network.mitm.hooks.github_write]
 #   host = "api.github.com"
+#   schemes = ["https"]
+#   ports = [443]
 #   methods = ["POST", "PUT"]
 #   path_prefixes = ["/repos/openai/"]
 #   query = { state = ["open"], per_page = ["100"] }
 #   headers = { "x-github-api-version" = ["2022-11-28"] }
 #   # body 是保留字段; 当前运行时验证会拒绝非空 body matcher, 不要启用
 #   # body = { repository = "openai/codex" }
-#   action = ["strip_auth"]
+#   action = ["strip_auth", "inject_ci_token"]
 #
 #   [permissions.mitm_example.network.mitm.actions.strip_auth]
 #   strip_request_headers = ["authorization"]
 #
 #   [[permissions.mitm_example.network.mitm.actions.inject_ci_token.inject_request_headers]]
 #   name = "x-ci-token"
+#   # placeholder 是可选字符串; 设置后仅替换同名请求头中恰好等于此值的单一值
+#   placeholder = "__CODEX_CI_TOKEN__"
 #   secret_env_var = "CI_TOKEN"
 #   # secret_file 与 secret_env_var 二选一; secret_file 必须是绝对路径
 #   # secret_file = 'C:\Users\you\.codex\secrets\ci-token.txt'
@@ -2076,10 +2112,10 @@ multi_agent = true
 # 角色专属 developer instructions 的优先级更高
 # multi_agent_v2.subagent_developer_instructions = "只处理委派范围, 并用简洁中文汇报结果。"
 #
-# preserve_fork_prefix: 类型: 布尔值 | 默认: false
+# preserve_fork_prefix: 类型: 布尔值 | 默认: true
 # 完整 fork 时保留父 Agent 的模型可见历史前缀, 并追加子 Agent 指令;
 # 旧式压缩没有可复用的上下文基线时仍会重建历史
-# multi_agent_v2.preserve_fork_prefix = false
+# multi_agent_v2.preserve_fork_prefix = true
 #
 # multi_agent_mode_hint_text — 类型: 字符串 (可选) | 默认: 无
 # 自定义多 Agent 模式提示; 设置后覆盖按 reasoning effort 推导的内置模式
@@ -2270,13 +2306,20 @@ compaction_image_budget = true
 # 启用记忆系统 (从会话中提取经验, 在未来会话中注入)
 memories = true
 
-# worktrees — 默认: true | 稳定
-# 启用受管 Git worktree 创建和按仓库组织会话的功能
-# worktrees = true
+# incremental_tools: 默认: true | 稳定
+# 为模型目录中启用 Responses Lite 的模型, 在 world state 中记录顶层工具定义,
+# 并以增量上下文发布变化; 普通 Responses 模型不使用此路径
+# incremental_tools = true
 
-# realtime_conversation — 默认: true | 稳定
-# 启用 TUI 实时语音对话; 使用 /voice 或默认 F8 切换, /voice settings 选择声音
-# realtime_conversation = true
+# mcp_oauth_refresh_coordination: 默认: true | 稳定
+# 让 MCP 客户端通过已配置的凭据存储协调 OAuth token 刷新
+# mcp_oauth_refresh_coordination = true
+
+# bedrock_setup_wizard: 默认: true | 稳定
+# 嵌入式 TUI 仍需登录、未显式指定 model_provider、当前提供商为 openai,
+# 且登录策略允许 API 登录时, 提供 Amazon Bedrock 初始化向导;
+# 检测到 AWS 凭据时, API Key 入口与其他 AWS 登录方式一起显示
+# bedrock_setup_wizard = true
 
 # system_proxy_fallback — 默认: true | 稳定
 # 符合条件的初始化请求在常规网络路由失败后, 尝试通过系统代理重试;
@@ -2367,6 +2410,11 @@ prevent_idle_sleep = true
 
 # ── 开发中功能 (Under Development) ─────────────────────────────────────────
 
+# app_server_websocket_compression: 默认: false | 开发中
+# 为 app-server 的 WebSocket 与 Unix socket 连接启用协商式 zstd 压缩;
+# 与模型请求使用的 enable_request_compression 独立, 不影响 stdio 传输
+# app_server_websocket_compression = false
+
 # async_compaction: 默认: false | 开发中
 # 在达到前台压缩限制前, 按模型完整上下文窗口的使用比例启动后台远端压缩。
 # 仅在提供商支持远端 V2 压缩且未启用 token_budget 时生效;
@@ -2382,12 +2430,19 @@ prevent_idle_sleep = true
 # 再由代理向受信 HTTPS 端点注入真实凭据; 自定义凭据来自 network_proxy.credentials。
 # 本项不会自动启用网络代理, 也不授予网络权限; 关闭沙箱、未启用代理,
 # 或 shell 环境覆盖包含大小写不敏感的凭据键冲突时, 脱敏不会生效
+# rust-v0.164.0 起也覆盖符合条件的远程 Bash 命令和 Zsh 快照会话, 包括自定义
+# provider 凭据; 不支持的 shell 启动或无法安全回放快照时会警告并使用未脱敏凭据
 # credential_masking = false
 
 # defer_mailbox_preemption — 默认: false | 开发中
 # 收到 Agent 消息时, 不再在 reasoning / commentary 边界打断当前采样;
 # 待处理消息会在下一个正常输入边界交付
 # defer_mailbox_preemption = false
+
+# wake_on_agent_messages: 默认: false | 开发中
+# 允许 Agent 消息在回合结束后唤醒空闲根会话, 为待处理消息启动后续回合;
+# 与采样中的消息抢占策略 defer_mailbox_preemption 分别控制
+# wake_on_agent_messages = false
 
 # instant_interrupt — 默认: true | 开发中
 # 收到新用户输入时抢占正在生成的模型回复, 并让前台等待 code mode
@@ -2410,6 +2465,10 @@ prevent_idle_sleep = true
 # 让全新上下文的 V2 子 Agent 继承父会话中由客户端定义的动态工具;
 # 仍须启用 multi_agent_v2
 # multi_agent_v2_dynamic_tools = false
+
+# subagent_thread_environments: 默认: false | 开发中
+# 子 Agent 继承父线程已配置的执行环境绑定, 避免继承当前回合临时选择的执行环境
+# subagent_thread_environments = false
 
 # subagent_default_context_limits: 默认: false | 开发中
 # 为子 Agent 清除继承的 model_context_window 和 model_auto_compact_token_limit
@@ -2515,10 +2574,10 @@ prevent_idle_sleep = true
 # 允许 turn 在选定的 executor 仍处于启动阶段时先行开始
 # deferred_executor = false
 
-# stable_environment_tools — 默认: false | 开发中
-# 执行器就绪前先发布已启用的环境工具及其 shell 参数, 保持工具声明稳定;
-# 实际执行仍需可用的执行环境并通过对应权限检查
-# stable_environment_tools = false
+# multi_env_copy_file: 默认: false | 开发中
+# 注册跨执行环境的文件复制工具; 调用时需明确选择来源和目标执行环境,
+# 实际读写仍受各环境的文件系统权限约束
+# multi_env_copy_file = false
 
 # cwd_relative_turn_diffs — 默认: false | 开发中
 # 让 turn 的 diff 展示路径相对于当前工作目录, 而不是相对于 Git 根目录
@@ -2528,11 +2587,6 @@ prevent_idle_sleep = true
 # 把延迟加载工具命名空间的增删变化记录到模型可见 world state;
 # 启用后 tool_search 不再重复列出同一份来源清单
 # deferred_tool_world_state = false
-
-# incremental_tools — 默认: false | 开发中
-# 为模型目录中启用 Responses Lite 的模型, 在 world state 中记录顶层工具定义,
-# 并以增量上下文发布变化; 普通 Responses 模型不使用此路径
-# incremental_tools = false
 
 # standalone_web_search — 默认: false | 开发中
 # 通过扩展工具面暴露独立 web_search 工具
@@ -2577,6 +2631,11 @@ prevent_idle_sleep = true
 # 通过 exec-server 批量发现选定 capability roots 中的插件、MCP、Connector
 # 与 Skills, 并为当前线程缓存有界的发现结果
 # executor_capability_discovery = false
+
+# executor_capability_discovery_v2: 默认: false | 开发中
+# 通过 V2 接口获取并缓存执行器能力清单; 启用时使用 V2 清单代替旧发现路径。
+# 插件、Skills、MCP 与 hooks 是否生效仍受所选根、插件接受与启用策略约束
+# executor_capability_discovery_v2 = false
 
 # skip_host_skill_discovery — 默认: false | 开发中
 # 当没有已注册扩展要求宿主 Skill 快照时, 跳过宿主 Skill 发现;
@@ -2705,14 +2764,20 @@ prevent_idle_sleep = true
 # 让使用 ChatGPT 认证的会话采用 Agent Identity
 # use_agent_identity = false
 
+# runtime_agent_instances: 默认: false | 开发中
+# 配置临时运行实例的请求认证; 该标签已提供配置类型和独立认证组件,
+# 但核心请求链尚未接入此开关, 不应依赖它改变实际认证行为。
+# 布尔写法与对象写法择一; 单独设置 mode 不会启用功能:
+# runtime_agent_instances = false
+# runtime_agent_instances.enabled = false
+# mode: 字符串 | 默认: "dual_header"
+# "dual_header" 同时发送账号凭据与运行实例断言;
+# "assertion_only" 仅使用运行实例断言作为请求凭据
+# runtime_agent_instances.mode = "dual_header"
+
 # psp — 默认: false | 开发中
 # 为第一方 ChatGPT 请求附加 PSP 路由标记; 普通自定义 provider 不使用该路径
 # psp = false
-
-# bedrock_setup_wizard — 默认: false | 开发中
-# 在嵌入式 TUI 尚未登录、未显式选择模型提供商且允许 API 登录时,
-# 提供 Amazon Bedrock 初始化向导
-# bedrock_setup_wizard = false
 
 # step_model_switching — 默认: false | 开发中
 # 允许后续 step capture 显式请求切换模型; 关闭时会拒绝 turn settings 更新
@@ -2763,9 +2828,9 @@ prevent_idle_sleep = true
 # "json" 将消息正文转义为 JSON 字符串, 由宿主维护元数据
 # guardianv2.transcript_mode = "line"
 # async_classifier_mode — 类型: 字符串 (可选)
-# 默认: 当前模型目录的设置, 未提供时为 "snapshot"; 每个父任务固定选择一次。
+# 默认: 当前模型目录的设置, 未提供时为 "conversation"; 每个父任务固定选择一次。
 # "snapshot" 每次使用独立快照; "conversation" 保留异步分类器的增量会话历史
-# guardianv2.async_classifier_mode = "snapshot"
+# guardianv2.async_classifier_mode = "conversation"
 # async_classifier_conversation_token_limit — 类型: 正整数 | 默认: 100000
 # conversation 模式下一次请求预计超过此 token 数时重置保留的历史;
 # 模型目录可覆盖默认值, 本地设置优先。重置后的新请求仍受模型输入上限约束
@@ -2849,14 +2914,14 @@ prevent_idle_sleep = true
 # 未设置该标记时继续使用旧协议, 未知版本标记会被拒绝
 # mcp_2026_07_28 = false
 
+# mcp_tool_list_changed: 默认: false | 开发中
+# 处理普通 MCP 服务器在同一回合内发出的 notifications/tools/list_changed,
+# 重新读取工具列表并更新后续采样可见的工具面
+# mcp_tool_list_changed = false
+
 # codex_apps_mcp_2026_07_28 — 默认: false | 开发中
 # 为宿主拥有的 Codex Apps MCP server 启用 MCP 2026-07-28 协议
 # codex_apps_mcp_2026_07_28 = false
-
-# mcp_oauth_refresh_coordination — 默认: false | 开发中
-# 让 MCP 客户端通过已配置的凭据存储协调 OAuth token 刷新;
-# false 保留旧的刷新模式
-# mcp_oauth_refresh_coordination = false
 
 # use_xaa — 默认: false | 开发中
 # 为配置为 ema_auth 的 MCP 资源启用企业刷新令牌交换; 需同时配置第 21 节的
@@ -2886,9 +2951,13 @@ prevent_idle_sleep = true
 # use_legacy_landlock — 已弃用: 旧版 Linux 沙箱实现开关;
 #                        如无特殊需要, 请删除此项
 # imagegenext         — image_generation 的历史别名; 请改用规范名称
-# transcript_v2       — 已忽略; 全屏界面使用 [tui].fullscreen_transcript
 
 # ── 已移除功能 (Removed) — 不要在新配置中使用 ──────────────────────────────
+# transcript_v2: 已移除; 全屏界面使用 [tui].fullscreen_transcript
+# stable_environment_tools: 已移除, 不再控制执行环境工具的发布
+# worktrees: 已移除; 受管 worktree 与按仓库组织会话的功能始终可用
+# realtime_conversation: 已移除; TUI 语音能力由平台支持决定,
+# 可通过 /voice 或默认 F8 切换, /voice settings 选择声音
 # undo                   — 已移除, /undo 现在会报告不可用
 # js_repl                — 已移除, 相关 Node 路径配置也已忽略
 # js_repl_tools_only     — 已移除
@@ -2940,9 +3009,10 @@ prevent_idle_sleep = true
 # ╔═══════════════════════════════════════════════════════════════════════════╗
 # ║                     第 15 节: Lifecycle Hooks                           ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
-# 作用: 在会话、工具调用、审批请求、用户提交和停止等生命周期事件中运行命令
+# 作用: 在模型请求、会话、工具调用、审批请求、用户提交和停止等生命周期事件中运行命令
 # 说明: v0.124.0 起 hooks 已稳定; 也可以继续使用 ~/.codex/hooks.json
-# 支持事件: PreToolUse / PermissionRequest / PostToolUse / SessionStart /
+# 支持事件: PreModelRequest / PostModelRequest / PreToolUse / PermissionRequest /
+#           PostToolUse / SessionStart /
 #           SessionEnd / UserPromptSubmit / PreCompact / PostCompact /
 #           SubagentStart / SubagentStop / Stop / Interrupt
 # matcher:
@@ -2951,7 +3021,7 @@ prevent_idle_sleep = true
 #   - SessionEnd: 匹配结束原因; 当前值为 "other", 且只对根线程执行
 #   - SubagentStart / SubagentStop: 匹配 agent_type, 例如 "worker" 或 "review"
 #   - PreCompact / PostCompact: 匹配 "manual" / "auto"
-#   - UserPromptSubmit / Stop / Interrupt: 当前忽略 matcher
+#   - PreModelRequest / PostModelRequest / UserPromptSubmit / Stop / Interrupt: 忽略 matcher
 # handler:
 #   - command 类型支持同步或 async = true 异步执行; 异步 hook 在后台运行, 不能
 #     改变当前事件的控制结果。prompt / agent 类型可解析但尚未执行
@@ -2963,8 +3033,24 @@ prevent_idle_sleep = true
 #     UserPromptSubmit、SubagentStart 生效, 控制单个 hook 的 additionalContext
 #     溢出阈值; 默认约 2500 token, 设为 0 可禁用该 hook 的磁盘溢出。
 #     其他事件设置此项会被忽略并产生 warning
+#   - PreModelRequest / PostModelRequest 仅用于观测每次模型请求; 输出和退出码不会
+#     阻止请求、改写输入或追加模型上下文。PostModelRequest 会提供 status
+#     (completed / failed / cancelled)、error 和 token_usage; 无可用值时为 null
 
 [hooks]
+# ── PreModelRequest / PostModelRequest: 观测模型请求 ───────────────────────
+# [[hooks.PreModelRequest]]
+# [[hooks.PreModelRequest.hooks]]
+# type = "command"
+# command = "python3 ~/.codex/hooks/pre_model_request.py"
+# timeout = 10
+#
+# [[hooks.PostModelRequest]]
+# [[hooks.PostModelRequest.hooks]]
+# type = "command"
+# command = "python3 ~/.codex/hooks/post_model_request.py"
+# timeout = 10
+#
 # ── PreToolUse: 在工具调用前运行 ───────────────────────────────────────────
 # [[hooks.PreToolUse]]
 # matcher = "Bash|apply_patch"
@@ -3067,6 +3153,9 @@ prevent_idle_sleep = true
 # [hooks.state.'C:\Users\you\.codex\hooks.json:pre_tool_use:0:0']
 # enabled = false
 # trusted_hash = "sha256:abc123"
+# trusted_content_hash: 可选字符串, 记录获准的插件内容哈希, 与声明哈希分开保存。
+# 仅用于插件来源的 hook, 通常由客户端写入; 每次执行前会复核插件内容,
+# 内容变化后需重新批准, 不应手工编造或复制其他 hook 的哈希
 
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -3180,7 +3269,7 @@ config = [
 # ╔═══════════════════════════════════════════════════════════════════════════╗
 # ║                     第 18 节: Plugins (插件) 配置                       ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
-# 作用: 启用或禁用已安装的插件
+# 作用: 启用或禁用已安装的插件, 并保存远端插件的供应元数据
 # 前提: 插件功能默认已启用; 若显式设置 [features] plugins = false, 本节不会生效
 # 键格式: "<plugin>@<marketplace>"。<plugin> 可包含 ASCII 字母、数字、点、
 #         下划线和连字符, 但点不能位于首尾或连续出现; <marketplace> 只能包含
@@ -3196,6 +3285,15 @@ config = [
 # enabled: 类型: 布尔值 (可选) | 默认: 继承已安装插件的默认策略
 # 是否加载这个插件; 显式设置会覆盖 [plugins._default].enabled
 # enabled = true
+# remote_plugin_id: 可选字符串, ChatGPT 托管远端插件的稳定唯一标识
+# remote_plugin_id = "remote-plugin-id"
+# release_id: 可选字符串, 固定远端插件的指定发布版本; 省略时不改变版本选择
+# release_id = "release-id"
+# auto_provision: 可选布尔值, 仅在有 remote_plugin_id 且 Plugin Service 向该用户
+# 提供插件时参与供应策略; 省略不表示请求自动供应。
+# Core 只保存这些元数据, 不会因此选取、下载或安装发布版本;
+# 实际供应仍受有效启用状态、受信供应策略、认证和授权限制约束
+# auto_provision = false
 #
 # ── 插件内 MCP server 策略覆盖 ─────────────────────────────────────────────
 # 说明: 插件 manifest 决定 MCP server 如何启动; 宿主配置可覆盖启用状态、
@@ -3632,7 +3730,8 @@ required = false
 #   "chatgpt" — 对与 https://chatgpt.com/backend-api/codex 同源的地址
 #               使用当前 ChatGPT 会话;
 #               会话提供方不可用时仍可回退到已存储的 OAuth 凭证
-#   "ema_auth" — 通过企业 IdP 刷新令牌交换资源专属授权, 不允许替代凭证或回退
+#   "ema_auth": 通过企业 IdP 交换资源专属授权, 可复用符合条件的 Codex 账号授权,
+#               或使用独立企业登录; 不接受 bearer/header 替代或回退到普通 OAuth
 # oauth / chatgpt 下, 已配置的 bearer token 或 Authorization header 优先;
 # 这两种模式最终允许回退到未认证连接。ema_auth 的完整示例与约束见下方
 # auth = "oauth"
@@ -3687,13 +3786,22 @@ tool_timeout_sec = 120
 
 # ── 示例 3: 企业托管 MCP 认证 (EMA / XAA) ─────────────────────────────────
 # 前提: 在非项目配置中设置 [features].use_xaa = true。
-# 共享 IdP 与 Codex 账号凭证独立; issuer / client_id 必须在同一受信配置层声明,
+# issuer / client_id 必须在同一受信配置层完整声明,
 # 托管层优先于普通用户配置。项目配置或插件声明不能选择、替换企业 IdP
+# Codex 的 ChatGPT 登录授权具备匹配的 issuer、有效身份和刷新令牌等条件时,
+# 可复用账号授权; 否则使用独立企业登录。若 IdP 配置了 client_secret,
+# 还要求账号授权的 client_id 与该 IdP 注册一致
 # [mcp_enterprise_managed_auth.idp]
 # issuer — 类型: 字符串 (必填), 企业 OAuth 发现与身份验证的 issuer
 # issuer = "https://idp.example.com"
-# client_id — 类型: 字符串 (必填), 企业 IdP 注册的公共 OAuth 客户端 ID
+# client_id: 字符串 (必填), 企业 IdP 注册的 OAuth 客户端 ID
 # client_id = "codex-enterprise-client"
+# client_secret: 非空字符串 (可选), 机密 OAuth 客户端在登录与令牌交换时使用;
+# 公共客户端省略此项, 真实凭据仅放在受信本地或托管配置中
+# client_secret = "replace-with-your-idp-client-secret"
+# token_endpoint_auth_method: 可选字符串, 仅在配置 client_secret 时允许设置;
+# 有 secret 时默认 "client_secret_basic", 也可选 "client_secret_post"
+# token_endpoint_auth_method = "client_secret_basic"
 #
 # 每个资源的传输、授权、scope 和 resource 也必须在一个非项目配置层完整声明。
 # 仅支持宿主本地连接的 streamable HTTP; 不允许 bearer_token_env_var、非空
@@ -3708,6 +3816,12 @@ tool_timeout_sec = 120
 # authorization_server_issuer — 类型: 字符串 (可选), 预期的资源授权服务器 issuer
 # 仅允许与 auth = "ema_auth" 一起使用
 # authorization_server_issuer = "https://auth.example.com"
+# client_secret: 非空字符串 (可选); 设置后必须同时提供 client_id 和显式的
+# authorization_server_issuer, 绑定预注册机密资源客户端的令牌交换
+# client_secret = "replace-with-your-resource-client-secret"
+# token_endpoint_auth_method: 可选字符串, 仅用于 auth = "ema_auth" 且已有
+# client_secret 的资源; 默认 "client_secret_basic", 也可选 "client_secret_post"
+# token_endpoint_auth_method = "client_secret_basic"
 
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗
