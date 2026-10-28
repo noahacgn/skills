@@ -2,7 +2,7 @@
 #                    Codex CLI: config.toml 完整配置参考                      #
 #                                                                             #
 #  文件位置: ~/.codex/config.toml (即 $CODEX_HOME/config.toml)                #
-#  适用版本: Codex CLI rust-v0.164.0 (源码提交 6aaac69480)                   #
+#  适用版本: Codex CLI rust-v0.165.0 (源码提交 360319d8de)                   #
 #  说    明: 本文件覆盖当前公开 Schema 可见配置项, 并附带详细中文参考         #
 #            尽量标注类型 / 默认值 / 可选值 / 运行时作用                      #
 #            本文件含非默认值和环境相关示例, 使用前请按实际环境审阅              #
@@ -25,7 +25,7 @@
 # 类型: 字符串 (可选)
 # 默认: 无 (由 Codex 自动选择)
 # 作用: 指定主力模型的名称 (即 model slug)
-# 示例: "gpt-5.6-sol"、"o4-mini"、"gpt-4o" 等
+# 示例: "gpt-6.1-sol"、"gpt-6.1-terra" 等; 可用模型取决于提供商和账号
 # 说明: 如果不设置, Codex 会使用内置模型目录中的默认模型
 model = "gpt-5.6-sol"
 
@@ -41,13 +41,16 @@ review_model = "gpt-5.6-sol"
 # 类型: 字符串 (可选)
 # 默认: 无 (使用内置 "openai" 提供商)
 # 作用: 指定使用哪个模型提供商 (对应下方 [model_providers.xxx] 中定义的 key)
-# 示例: "openai"、"amazon-bedrock"、"amazon-bedrock-runtime"、"custom"、"ollama"、"lmstudio"
+# 示例: "openai"、"amazon-bedrock"、"amazon-bedrock-runtime"、"gcp"、"custom"、"ollama"、"lmstudio"
 # 说明: 内置提供商有 openai / amazon-bedrock / amazon-bedrock-runtime /
-#       ollama / lmstudio;
+#       gcp / ollama / lmstudio;
 #       amazon-bedrock 可覆盖 endpoint、HTTP headers、命令认证以及
 #       aws.profile / aws.region / aws.credential_export / aws.auth_refresh。未使用命令认证、托管
 #       Bedrock API Key 或 AWS_BEARER_TOKEN_BEDROCK 时, 请求鉴权才回退到
 #       AWS SDK/SigV4
+#       gcp 使用 Google Cloud Vertex AI, 支持覆盖 base_url / auth / http_headers;
+#       默认通过 gcloud 的 Application Default Credentials 获取访问令牌,
+#       项目和区域环境变量及完整示例见第 20 节
 #       你也可以在 [model_providers] 小节中自定义提供商, 然后把名字填在这里
 model_provider = "custom"
 
@@ -71,7 +74,7 @@ approval_policy = "on-request"
 
 # ── approvals_reviewer ────────────────────────────────────────────────────
 # 类型: 字符串 (可选)
-# 默认: "user"
+# 默认: core 为 "user"; TUI 新会话采用服务端加载的配置默认值
 # 可选值:
 #   "user"               — 审批请求显示给用户, 由你手动决定 (默认)
 #   "auto_review"        — 审批请求路由给 Auto-review 子 Agent 自动评估
@@ -90,6 +93,9 @@ approval_policy = "on-request"
 #       rust-v0.147.0 起, CLI 的 --approve-for-me 会为当前进程注入
 #       approvals_reviewer="auto_review"、approval_policy="on-request" 和
 #       sandbox_mode="workspace-write"; 它不会把这些覆盖写回 config.toml
+#       rust-v0.165.0 起, TUI 启动新会话且未在本次调用显式指定 reviewer 时,
+#       不再用客户端本地解析的默认值覆盖服务端选择。CLI 显式覆盖仍优先;
+#       通过 --profile 启动时仍使用该预设解析出的 reviewer
 # approvals_reviewer = "user"
 
 # ── sandbox_mode ───────────────────────────────────────────────────────────
@@ -790,6 +796,11 @@ project_root_markers = [".git", "package.json", "go.mod", "pyproject.toml"]
 #       policy / extra_policy, 纯空白策略按未设置处理
 
 [auto_review]
+# timeout_ms: 类型: 非负整数 (可选, 32 位) | 默认: 90000
+# Guardian 单次审批审查的总预算 (毫秒), 包括会话准备与重试。
+# 设为 0 表示不设置审查截止时间; 用户取消和独立的传输超时仍然有效
+# timeout_ms = 90000
+
 # circuit_break_action — 类型: 字符串 (可选) | 默认: "default"
 # 控制 Guardian 熔断中断回合时是否同时提供结构化错误详情
 # 可选值:
@@ -1093,14 +1104,19 @@ set = { LANG = "en_US.UTF-8" }
 # 前提: 需要启用 [features] memories = true
 
 [memories]
-# version — 类型: 字符串 | 默认: "v1" | 可选值: "v1" | "v2"
+# version: 类型: 字符串 | 默认: 按用户目录状态派生 | 可选值: "v1" | "v2"
 # 选择记忆流水线; v1 使用 memories 目录, v2 使用隔离的 memories_v2 目录
 # 两个版本的记忆产物与存储彼此隔离; 切换版本后不会混用另一版本的已有产物
-version = "v1"
+# rust-v0.165.0 起, 未显式指定 version 且启用 memories 时, 若
+# $CODEX_HOME/memories 不存在, 且未显式设置 dual_write = false, 默认选择 v2。
+# 已有 v1 目录、显式关闭双写、未启用 memories 或目录状态读取失败时回落到 v1;
+# 显式 version 始终优先。此示例直接选择 v2
+version = "v2"
 
 # dual_write — 类型: 布尔值 | 默认: false
 # version = "v1" 时同时生成 v1 与 v2 记忆, 仍由 v1 提供上下文;
 # version = "v2" 时只运行 v2, 即使本项为 true 也不会继续生成 v1
+# 显式设置 false 且省略 version 会保留 v1, 不采用新用户目录的 v2 默认值
 dual_write = false
 
 # generate_memories — 类型: 布尔值 | 默认: true
@@ -1878,6 +1894,11 @@ terminal_resize_reflow_max_rows = 9000
 # *.example.com 仅匹配子域, **.example.com 同时匹配主域与子域;
 # ? 匹配恰好一个字符 (包括点), 可以与 * 组合使用。
 # deny 规则优先; 单独的全局 * 默认被拒绝
+# rust-v0.165.0 起, 管理员可通过 requirements.toml 的 network.review_domains
+# 将匹配域名送入现有网络审批流程。显式 deny 优先于该列表, 该列表优先于普通
+# allow 规则; 审批缓存、hooks 与 reviewer 路由仍生效。
+# review_domains 仅属于 requirements, 不能写入本文件的 network 子表或
+# [features].network_proxy 对象, 本地配置也不能覆盖它
 # 独立示例 (将 domain_example 替换为你的 profile 名):
 #   [permissions.domain_example.network.domains]
 #   "api.openai.com" = "allow"
@@ -2311,6 +2332,18 @@ memories = true
 # 并以增量上下文发布变化; 普通 Responses 模型不使用此路径
 # incremental_tools = true
 
+# prediction_preserve_parent_tools: 默认: true | 稳定
+# 在禁用 MCP 的预测 fork 与 thread/sample 采样线程中保留父会话继承的工具声明,
+# 维持模型可见的工具上下文; 不会重新连接 MCP 或允许执行继承的 MCP 工具
+# prediction_preserve_parent_tools = true
+
+# reasoning_effort_override: 默认: true | 稳定
+# 在推理等级首次确立或发生变化时, 向会话历史追加可信的配置记录;
+# 仅用于内置 OpenAI provider 且模型启用 use_responses_lite 的会话,
+# 不替换请求顶层的 reasoning.effort。除 disabled 外的未知自定义等级不会写入。
+# rust-v0.165.0 起默认启用, 会话中可按支持模型的能力更新推理强度
+# reasoning_effort_override = true
+
 # mcp_oauth_refresh_coordination: 默认: true | 稳定
 # 让 MCP 客户端通过已配置的凭据存储协调 OAuth token 刷新
 # mcp_oauth_refresh_coordination = true
@@ -2415,6 +2448,12 @@ prevent_idle_sleep = true
 # 与模型请求使用的 enable_request_compression 独立, 不影响 stdio 传输
 # app_server_websocket_compression = false
 
+# tui_multi_backend: 默认: false | 开发中
+# 为 TUI 发现和选择多个会话后端预留的开关。
+# 本 tag 仅注册配置并准备多后端会话容器, 常规 CLI 启动仍只传入单一后端,
+# 尚无读取此开关并自动发现或连接多个后端的运行路径
+# tui_multi_backend = false
+
 # async_compaction: 默认: false | 开发中
 # 在达到前台压缩限制前, 按模型完整上下文窗口的使用比例启动后台远端压缩。
 # 仅在提供商支持远端 V2 压缩且未启用 token_budget 时生效;
@@ -2442,6 +2481,8 @@ prevent_idle_sleep = true
 # wake_on_agent_messages: 默认: false | 开发中
 # 允许 Agent 消息在回合结束后唤醒空闲根会话, 为待处理消息启动后续回合;
 # 与采样中的消息抢占策略 defer_mailbox_preemption 分别控制
+# rust-v0.165.0 起, 用户中断或切换到 Plan 模式后, 已排队的 Agent 消息
+# 不会自动重启会话; 显式后续用户输入仍可继续处理保留的消息
 # wake_on_agent_messages = false
 
 # instant_interrupt — 默认: true | 开发中
@@ -2625,6 +2666,9 @@ prevent_idle_sleep = true
 
 # external_agent_memory_import — 默认: false | 开发中
 # 启用外部 Agent 项目记忆的发现、选择和导入流程
+# rust-v0.165.0 起支持 v2: 全新 v2 用户目录只导入 memories_v2;
+# 已有 v1 目录或当前选择 v1 时, 所选外部资源会同步到两个版本的隔离目录,
+# 并分别排队整理。只同步外部资源, 不复制已有的 v1 记忆或笔记
 # external_agent_memory_import = false
 
 # executor_capability_discovery — 默认: false | 开发中
@@ -2725,12 +2769,6 @@ prevent_idle_sleep = true
 # 非缓存输入 token 的计费权重
 # rollout_budget.prefill_token_weight = 0.25
 
-# reasoning_effort_override — 默认: false | 开发中
-# 在推理等级首次确立或发生变化时, 向会话历史追加可信的配置记录;
-# 仅用于内置 OpenAI provider 且模型启用 use_responses_lite 的会话,
-# 不替换请求顶层的 reasoning.effort。除 disabled 外的未知自定义等级不会写入
-# reasoning_effort_override = false
-
 # current_time_reminder — 默认: false | 开发中
 # 按经过时间向上下文注入当前 UTC 时间, 并暴露当前时间工具;
 # 每个新上下文窗口也会立即注入一次
@@ -2782,6 +2820,11 @@ prevent_idle_sleep = true
 # step_model_switching — 默认: false | 开发中
 # 允许后续 step capture 显式请求切换模型; 关闭时会拒绝 turn settings 更新
 # step_model_switching = false
+
+# guardian_recorded_items: 默认: false | 开发中
+# 将 Guardian 子审查的私有条目和中断转发给父会话的 raw-event 观察者,
+# 供宿主记录或展示审查过程; 不改变实际审批结论
+# guardian_recorded_items = false
 
 # guardian_root_handoff_context — 默认: false | 开发中
 # 为 MultiAgent V2 子 Agent 的 Guardian 审查筛选根会话证据: 结合发给该 Agent
@@ -2884,6 +2927,15 @@ prevent_idle_sleep = true
 # guardianv2_decisions_comparison — 默认: false | 开发中
 # 在 Guardian V2 旁并行运行 Decisions 作对比测量, 不改变实际审批结论
 # guardianv2_decisions_comparison = false
+
+# guardianv3: 默认: false | 开发中
+# Guardian V3 的独立配置入口; 可使用布尔值或仅包含 enabled 的对象,
+# 两种写法二选一。省略 enabled 不会自动启用功能。
+# 本 tag 仅注册此开关并提供本地讨论板辅助组件, 常规审批流程尚未读取它,
+# 启用后不会自动把现有审批审查切换为 Guardian V3
+# guardianv3 = false
+# 或使用对象形式:
+# guardianv3.enabled = true
 
 # retain_client_developer_messages — 默认: false | 开发中
 # 在上下文压缩后保留由客户端写入的 developer 消息
@@ -3342,10 +3394,13 @@ config = [
 # ║                     第 20 节: 模型提供商定义                            ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 # 作用: 定义自定义模型 API 提供商, 或对少数内置提供商做受限覆盖
-# 说明: 内置提供商有 openai / amazon-bedrock / ollama / lmstudio
+# 说明: 内置提供商有 openai / amazon-bedrock / amazon-bedrock-runtime /
+#       gcp / ollama / lmstudio
 #       openai / ollama / lmstudio 不能在这里重定义;
 #       amazon-bedrock 支持覆盖 base_url、auth、http_headers、
 #       aws.profile、aws.region、aws.credential_export 与 aws.auth_refresh
+#       gcp 只支持覆盖 base_url、auth、http_headers; 其他 provider 字段
+#       的非默认值会被拒绝, 无需填写 name / wire_api 等内置字段
 #       你也可以在这里添加自定义提供商 (如本地代理、Azure OpenAI 等)
 
 # ── [model_providers.amazon-bedrock] — Amazon Bedrock ─────────────────────
@@ -3422,6 +3477,42 @@ config = [
 # profile = "codex-bedrock"
 # region = "us-west-2"
 # 也支持与上方相同的 credential_export / auth_refresh 配置
+
+# ── [model_providers.gcp]: Google Cloud Vertex AI ─────────────────────────
+# 作用: 使用 rust-v0.165.0 新增的内置 Google Cloud Vertex AI 提供商
+# 使用时把第 1 节 model_provider 改为 "gcp", 并选择该提供商支持的模型:
+# gpt-6.1-sol / gpt-6.1-terra / gpt-6-astra / gpt-6-luna。
+# 这些是替换第 1 节已有值的顶层配置, 不要在本节原地取消注释:
+# model_provider = "gcp"
+# model = "gpt-6.1-terra"
+#
+# 未覆盖 base_url 时须设置 GOOGLE_CLOUD_PROJECT 为 Google Cloud 项目 ID;
+# GOOGLE_CLOUD_LOCATION 为可选区域, 默认 "global"。
+# 默认 endpoint 为:
+# https://aiplatform.googleapis.com/v1/projects/<project>/locations/<location>/publishers/openai/v1
+# 两个环境变量仅接受 ASCII 字母、数字和连字符; 这里不是 TOML 配置键。
+# 覆盖 base_url 后无需上述环境变量
+#
+# 默认认证执行 gcloud auth application-default print-access-token;
+# Windows 使用 gcloud.cmd, 首次使用前先执行 gcloud auth application-default login。
+# 内置命令认证的超时为 30000 毫秒, 令牌刷新间隔为 3000000 毫秒 (50 分钟),
+# 命令工作目录为会话解析后的 cwd; 无需 OpenAI 登录或 OPENAI_API_KEY。
+# 可用能力不含 reasoning summary、图像生成、Web search 和模型 WebSocket 传输
+#
+# [model_providers.gcp]
+# base_url: 类型: 字符串 (可选), 覆盖 Vertex endpoint
+# base_url = "https://vertex-proxy.example.com/v1"
+# http_headers: 类型: 键值对 (可选), 追加自定义请求头
+# http_headers = { "x-company-route" = "codex" }
+#
+# [model_providers.gcp.auth]
+# 可选: 用自定义命令替换内置 gcloud 认证; stdout 返回原始访问令牌。
+# command 必填, 其余字段含义同下方 [model_providers.<id>.auth]
+# command = "get-vertex-token"
+# args = ["--format", "raw"]
+# timeout_ms = 30000
+# refresh_interval_ms = 3000000
+# cwd = 'C:\Users\you'
 
 [model_providers.custom]
 # name — 类型: 非空字符串 | 自定义提供商必填
