@@ -18,7 +18,7 @@
 
 ### 2. 派发子 Agent (Spawn sub-agents)
 
-并行启动 3 个或更多子 Agent。每个 Agent 必须为深化后的模块产出**截然不同 (radically different)** 的接口设计。
+并行启动 3 个或更多子 Agent，每个子 Agent 均使用全新的上下文窗口。每个 Agent 必须为深化后的模块产出**截然不同 (radically different)** 的接口设计。
 
 为每个子 Agent 提供独立的技术任务书（文件路径、代码耦合细节、来自 [DEEPENING.md](DEEPENING.md) 的依赖类别、缝隙背后的内容）。该任务书独立于步骤 1 中面向用户的问题空间说明。为每个 Agent 设定不同的设计约束：
 

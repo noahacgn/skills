@@ -21,7 +21,7 @@
 当设置为 `yes` 时，MR 遵循与 Issue 完全相同的标签与状态机，使用 `glab mr` 的对应命令：
 
 - **读取 MR**: `glab mr view <number> --comments` 以及用于获取 Diff 的 `glab mr diff <number>`。
-- **列出待定级的外部 MR**: `glab mr list -F json`，随后仅保留作者非项目成员/所有者的 MR（贡献者的 MR，而非维护者正在进行的工作）。
+- **列出待定级的外部 MR**: `glab mr list -O json`，随后仅保留作者非项目成员/所有者的 MR（贡献者的 MR，而非维护者正在进行的工作）。
 - **评论 / 打标 / 关闭**: `glab mr note`、`glab mr update --label`/`--unlabel`、`glab mr close`。
 
 不同于 GitHub，GitLab 对 Issue 与 MR 分别独立编号，因此一旦明确了维护者指的是哪类对象，`#42` 就不存在歧义。
@@ -39,8 +39,8 @@
 由 `/wayfinder` 调阅。**地图 (Map)** 是带有 `wayfinder:map` 标签的单一 Issue，其**子项 (Child)** Issue 作为具体 Ticket。
 
 - **地图 (Map)**：单个带有 `wayfinder:map` 标签的 Issue，包含 Notes / 迄今决策 (Decisions-so-far) / 迷雾 (Fog) 正文。`glab issue create --label wayfinder:map`。（在支持原生 Epic 的 GitLab 订阅层级中，Epic 也可作为地图载体；带有标签的 Issue 则在所有版本通用。）
-- **子 Ticket**：在描述顶部包含 `Part of #<map>` 且带有 `wayfinder:<type>`（`research`/`prototype`/`grilling`/`task`）标签的 Issue。一旦被认领，该 Ticket 被指派给执行开发者。
+- **子 Ticket**：在描述顶部包含 `Part of #<map>`、关联到地图（`glab issue create --linked-issues <map> --link-type relates_to`）且带有 `wayfinder:<type>`（`research`/`prototype`/`grilling`/`task`）标签的 Issue。一旦被认领，该 Ticket 被指派给执行开发者。
 - **阻塞关系 (Blocking)**：GitLab 的**原生阻塞关联**：标准的 UI 可视化呈现。通过以 Note 形式发送 `/blocked_by #<n>` 快捷指令来添加（`glab issue note <child> --message "/blocked_by #<blocker>"`）。原生阻塞关联属于 Premium/Ultimate 高级功能；在免费版本中（或不可用时），回退到在描述顶部添加 `Blocked by: #<n>, #<n>`。当所有阻塞 Ticket 均关闭时，该 Ticket 自动解除阻塞。
-- **前沿边界查询 (Frontier query)**：`glab issue list -O json` 限定在地图的子项范围内，剔除存在未关闭阻塞项（通过 `glab api projects/:id/issues/<child-iid>/links` 查询的原生 `blocked_by` 关联，或 `Blocked by` 行中有未关闭 Issue）或已有指派人的条目；按地图顺序排在首位的胜出。
+- **前沿边界查询 (Frontier query)**：通过 `glab api projects/:id/issues/<map>/links` 列出地图的子项，保留带有 `wayfinder:<type>` 标签的未关闭 Issue；剔除存在未关闭阻塞项（通过 `glab api projects/:id/issues/<child-iid>/links` 查询的原生 `blocked_by` 关联，或 `Blocked by` 行中有未关闭 Issue）或已有指派人的条目；按地图顺序排在首位的胜出。
 - **认领 (Claim)**：`glab issue update <n> --assignee @me`，会话的第一次写操作。
 - **解决 (Resolve)**：`glab issue note <n> --message "<answer>"`，随后 `glab issue close <n>`，然后在地图的“迄今决策”中追加上下文指针（要点 + 链接）。

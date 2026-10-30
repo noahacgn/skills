@@ -22,7 +22,7 @@ disable-model-invocation: true
 
 - `git remote -v` 和 `.git/config`，这是否为 GitHub 仓库？具体是哪一个？
 - 仓库根目录下的 `AGENTS.md` 和 `CLAUDE.md`，是否存在任一文件？其中是否已包含 `## Agent skills` 小节？
-- 根目录下的 `GLOSSARY.md` 与 `GLOSSARY-MAP.md`
+- 根目录下的 `GLOSSARY.md` 与 `GLOSSARY-MAP.md`，以及旧版的 `CONTEXT.md` / `CONTEXT-MAP.md`。若存在旧版文件，提议通过 `git mv` 将其重命名为对应的 `GLOSSARY` 文件名，并更新 `docs/agents/domain.md` 中对这些文件名的引用。
 - `docs/adr/` 及任何 `src/*/docs/adr/` 目录
 - `docs/agents/`：本技能先前的输出是否已存在？
 - `.scratch/`：是否已在使用本地 Markdown Issue 追踪约定
@@ -47,6 +47,8 @@ disable-model-invocation: true
 - **其他 (Other)**（Jira、Linear 等）：请用户用一段话描述其操作工作流；技能将以自由文本形式记录
 
 将选定结果记录在 `docs/agents/issue-tracker.md` 中。GitHub 和 GitLab 模板附带一个“PR 是否作为需求来源”的标志，默认**关闭 (no)**：保持关闭且无需主动提及；若用户希望将外部 PR 纳入分类定级队列，后续可自行在文件中修改该标志。
+
+GitHub 或 GitLab 追踪系统需要一个可访问的仓库。当用户选择其中之一，而没有 `git remote` 指向该平台时，先向用户获取仓库 URL，并完成关联（必要时执行 `git init`，然后执行 `git remote add origin <url>`），再继续后续步骤。只有在当前目录中运行 `gh repo view` / `glab repo view` 能输出对应项目，才算完成；若不能，则停止并告知用户缺少什么。
 
 **B 小节：分类定级标签词汇表 (Triage label vocabulary)。** 若未安装 `triage` 技能（探索阶段已获知），完全跳过本节；未安装的技能无需标签。
 
