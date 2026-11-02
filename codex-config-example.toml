@@ -2,7 +2,7 @@
 #                    Codex CLI: config.toml 完整配置参考                      #
 #                                                                             #
 #  文件位置: ~/.codex/config.toml (即 $CODEX_HOME/config.toml)                #
-#  适用版本: Codex CLI rust-v0.165.0 (源码提交 360319d8de)                   #
+#  适用版本: Codex CLI rust-v0.166.0 (源码提交 6ff1e1ca3b)                   #
 #  说    明: 本文件覆盖当前公开 Schema 可见配置项, 并附带详细中文参考         #
 #            尽量标注类型 / 默认值 / 可选值 / 运行时作用                      #
 #            本文件含非默认值和环境相关示例, 使用前请按实际环境审阅              #
@@ -48,8 +48,10 @@ review_model = "gpt-5.6-sol"
 #       aws.profile / aws.region / aws.credential_export / aws.auth_refresh。未使用命令认证、托管
 #       Bedrock API Key 或 AWS_BEARER_TOKEN_BEDROCK 时, 请求鉴权才回退到
 #       AWS SDK/SigV4
-#       gcp 使用 Google Cloud Vertex AI, 支持覆盖 base_url / auth / http_headers;
-#       默认通过 gcloud 的 Application Default Credentials 获取访问令牌,
+#       gcp 使用 Google Cloud Vertex AI, 支持覆盖 base_url / auth / http_headers /
+#       project_id / location / credential_file;
+#       openai 仅允许覆盖 model_catalog_url, 其他内置字段不能在此重定义。
+#       gcp 默认通过 gcloud 的 Application Default Credentials 获取访问令牌,
 #       项目和区域环境变量及完整示例见第 20 节
 #       你也可以在 [model_providers] 小节中自定义提供商, 然后把名字填在这里
 model_provider = "custom"
@@ -334,12 +336,12 @@ background_terminal_max_timeout = 300000
 
 # ── thread_unload_delay_secs ──────────────────────────────────────────────
 # 类型: 非负整数 (秒) (可选)
-# 默认: 1800 (30 分钟)
+# 默认: 60 (1 分钟)
 # 作用: app-server 在线程没有订阅者且无活动持续达到此时长后卸载线程
 # 说明: 0 表示满足条件后立即卸载; 每次加载线程时解析, 请求级配置覆盖按线程生效。
 #       已加载线程的计时不会因修改配置立即重算; 超出平台计时器可表示范围的数值
 #       会导致配置加载失败
-thread_unload_delay_secs = 1800
+thread_unload_delay_secs = 60
 
 # ── tool_output_token_limit ────────────────────────────────────────────────
 # 类型: 整数 (可选)
@@ -1152,6 +1154,11 @@ disable_on_external_context = false
 # 指定用于合并/整理记忆的模型
 # consolidation_model = "gpt-5.6-terra"
 
+# consolidation_service_tier: 类型: 字符串 (可选) | 默认: "default"
+# 记忆整理阶段使用的服务层, 独立于顶层 service_tier; 默认采用标准路由。
+# "fast" 会规范化为 "priority"; 其他字符串会透传, 是否支持取决于提供商
+consolidation_service_tier = "default"
+
 # max_raw_memories_for_consolidation — 类型: 整数 | 默认: 256 | 范围: 1-4096
 # 参与全局整理的原始记忆最大条数
 # 越大意味着整理时考虑的记忆越多, 但消耗也越大
@@ -1604,7 +1611,7 @@ terminal_resize_reflow_max_rows = 9000
 #   global: 全局动作: leader, open_agents, open_transcript, open_external_editor, copy,
 #              clear_terminal, submit, queue, toggle_shortcuts,
 #              toggle_vim_mode, toggle_fast_mode, toggle_raw_output,
-#              toggle_side_conversation, find_transcript, focus_activity
+#              toggle_side_conversation, find_transcript, select_transcript, focus_activity
 #   chat: 聊天区动作: open_presets, increase_reasoning_effort, decrease_reasoning_effort,
 #              previous_permission_mode, next_permission_mode, toggle_voice,
 #              toggle_voice_mute,
@@ -1653,6 +1660,9 @@ terminal_resize_reflow_max_rows = 9000
 # open_agents = "alt-a"
 # open_transcript = "leader t" # 自定义为前导键后按 t
 # find_transcript = "f3" # 搜索完整对话记录 (内置默认键)
+# select_transcript = "leader [" # 进入对话记录键盘选择模式 (内置默认绑定)
+# 默认先按 ctrl-x, 再按 [; 该模式支持按词、行和页选择, 并结合搜索定位文本。
+# 隐式绑定仅在对应前导键组合未被占用时安装; 显式设置 [] 可禁用
 # focus_activity = "f4" # 聚焦全屏对话中的活动组 (内置默认键)
 # open_external_editor = "leader e" # 自定义绑定; 内置默认键为 ctrl-g
 # copy = ["ctrl-y", "alt-y"]
@@ -1894,9 +1904,10 @@ terminal_resize_reflow_max_rows = 9000
 # *.example.com 仅匹配子域, **.example.com 同时匹配主域与子域;
 # ? 匹配恰好一个字符 (包括点), 可以与 * 组合使用。
 # deny 规则优先; 单独的全局 * 默认被拒绝
-# rust-v0.165.0 起, 管理员可通过 requirements.toml 的 network.review_domains
+# 管理员可通过 requirements.toml 的 network_proxy.review_domains
 # 将匹配域名送入现有网络审批流程。显式 deny 优先于该列表, 该列表优先于普通
 # allow 规则; 审批缓存、hooks 与 reviewer 路由仍生效。
+# network_proxy 是 requirements.toml 中的规范表名; 本文件仍使用权限 profile 的 network。
 # review_domains 仅属于 requirements, 不能写入本文件的 network 子表或
 # [features].network_proxy 对象, 本地配置也不能覆盖它
 # 独立示例 (将 domain_example 替换为你的 profile 名):
@@ -1907,9 +1918,11 @@ terminal_resize_reflow_max_rows = 9000
 # [permissions.<profile>.network.mitm]
 # 作用: 配置 HTTPS MITM hook; 当 mode = "limited" 或存在 MITM hook 时自动启用 MITM
 # 说明: hook 在 HTTPS CONNECT 被终止后匹配请求, action 可复用并可被更高优先级配置覆盖
-# version: 可选整数, 当前只接受 2; 使用 schemes / ports 或 placeholder 时必须设置。
+# version: 可选整数, 当前只接受 2; 使用 schemes / ports、placeholder、
+# body_secret_substitution 或 aws_sigv4 时必须设置。
 # schemes: 字符串数组, 仅接受 http / https; ports: 1-65535 的整数数组。
-# 两个数组默认均为空, 表示不限制对应维度; 凭据占位符替换仅支持 HTTPS 的 443 端口。
+# 两个数组默认均为空, 表示不限制对应维度;
+# 请求头凭据占位符替换仅支持 HTTPS 的 443 端口。
 # 注入宿主凭据的规则须放在非项目配置层; 项目配置不能新增凭据注入, 也不能改写
 # 受信 MITM 规则或其继承关系。hook、action 和注入头中的未知键会导致加载失败。
 # 示例 (用户级配置中的独立 full 模式 profile; limited 模式会拒绝下方 POST/PUT):
@@ -1942,6 +1955,56 @@ terminal_resize_reflow_max_rows = 9000
 #   # secret_file 与 secret_env_var 二选一; secret_file 必须是绝对路径
 #   # secret_file = 'C:\Users\you\.codex\secrets\ci-token.txt'
 #   prefix = "Bearer "
+#
+# rust-v0.166.0 新增的 action: body_secret_substitution / aws_sigv4。
+# 两者均在受信代理内读取凭据, 仅作用于 hook 匹配的 HTTPS 请求;
+# hook 的 host 必须是精确主机名, methods / path_prefixes 不能为空。
+# 每个 hook 最多选择一个 body 替换 action 和一个 AWS 签名 action。
+# secret 来源二选一: { env_var = "变量名" } 或 { file = '绝对路径' }。
+# 凭据值须非空且不超过 64 KiB
+# port 默认 443, 范围 1-65535; hook 的 ports 应与 action.port 对应。
+# max_body_bytes 默认 8388608 (8 MiB), 最大 16777216 (16 MiB)。
+#
+# 请求体替换: 在转发前按原始字节精确替换占位符, 若同时签名则先替换再签名。
+# replacements 必须含 1-32 项; placeholder 必须为 16-256 字节的 ASCII 标记,
+# 不同标记不能彼此包含。压缩、流式签名或带完整性校验头的请求体不受支持。
+# 以下示例接在上面的用户级 mitm_example profile 中:
+#   [permissions.mitm_example.network.mitm.hooks.secret_write]
+#   host = "api.example.com"
+#   schemes = ["https"]
+#   ports = [443]
+#   methods = ["POST"]
+#   path_prefixes = ["/v1/"]
+#   action = ["replace_body_secret"]
+#
+#   [permissions.mitm_example.network.mitm.actions.replace_body_secret.body_secret_substitution]
+#   port = 443
+#   max_body_bytes = 8388608
+#   replacements = [{ placeholder = "__CODEX_BODY_TOKEN_0001__", secret = { env_var = "SERVICE_TOKEN" } }]
+#   # secret 也可写作 { file = 'C:\Users\you\.codex\secrets\service-token.txt' }
+#
+# AWS SigV4: 用宿主真实凭据重签名携带匹配占位 access key 的请求。
+# placeholder_access_key_id 是暴露给执行环境的非秘密标识, 长度 1-128,
+# 仅接受 ASCII 字母、数字、下划线和连字符; region / service 不能为空,
+# 且仅接受 ASCII 字母、数字和连字符。预签名 URL 和流式签名不受支持。
+#   [permissions.mitm_example.network.mitm.hooks.aws_sts]
+#   host = "sts.us-east-1.amazonaws.com"
+#   schemes = ["https"]
+#   ports = [443]
+#   methods = ["POST"]
+#   path_prefixes = ["/"]
+#   action = ["sign_aws"]
+#
+#   [permissions.mitm_example.network.mitm.actions.sign_aws.aws_sigv4]
+#   placeholder_access_key_id = "CODEX_AWS_PLACEHOLDER"
+#   region = "us-east-1"
+#   service = "sts"
+#   access_key_id = { env_var = "PROXY_AWS_ACCESS_KEY_ID" }
+#   secret_access_key = { env_var = "PROXY_AWS_SECRET_ACCESS_KEY" }
+#   port = 443
+#   max_body_bytes = 8388608
+#   # 使用临时凭据时, 另加可选的 session_token:
+#   # session_token = { env_var = "PROXY_AWS_SESSION_TOKEN" }
 #
 # [permissions.<profile>.network.unix_sockets]
 # 类型: 键值对 | key 为绝对路径, value 为 "allow" | "deny"
@@ -2216,6 +2279,10 @@ plugins = true
 # 启用 PS-backed 远程插件目录及远程/本地版本展示;
 # marketplace 自身的 source_type 仍只有 git 或 local
 remote_plugin = true
+
+# plugin_discovery_prefetch: 默认: true | 稳定
+# app-server 启动时预取插件目录、精选插件和推荐列表; 关闭后不执行启动预取
+# plugin_discovery_prefetch = true
 
 # plugin_sharing — 默认: true | 稳定
 # 启用插件分享 / 签出相关工作流
@@ -2569,10 +2636,6 @@ prevent_idle_sleep = true
 # 需同时启用 code_mode
 # code_mode_tool_search = false
 
-# code_mode_tool_description_first: 默认: false | 开发中
-# 在 code mode 工具说明中, 先呈现每个工具的描述, 再呈现所属命名空间的描述
-# code_mode_tool_description_first = false
-
 # code_mode_prewarm — 默认: false | 开发中
 # 在会话启动时提前建立 code mode 独立宿主连接, 减少首次调用的等待时间;
 # 宿主不可用时不会执行预热
@@ -2681,6 +2744,22 @@ prevent_idle_sleep = true
 # 插件、Skills、MCP 与 hooks 是否生效仍受所选根、插件接受与启用策略约束
 # executor_capability_discovery_v2 = false
 
+# simplified_selection_hints: 默认: false | 开发中
+# 为用户明确选择的插件使用简短的 developer 提示, 引导使用其可用 Skills 和工具
+# simplified_selection_hints = false
+
+# omit_skill_descriptions: 默认: false | 开发中
+# 省略模型可见 Skills 目录中的描述, 不修改技能文件本身
+# omit_skill_descriptions = false
+
+# skill_catalog_deltas: 默认: false | 开发中
+# 把 Skills 新增和编辑作为增量追加到上下文, 在下次压缩前共享累计的目录预算
+# skill_catalog_deltas = false
+
+# untrusted_as_tool_output: 默认: false | 开发中
+# 把客户端提供的不可信上下文表示为独立的具名工具输出, 不会实际执行工具
+# untrusted_as_tool_output = false
+
 # skip_host_skill_discovery — 默认: false | 开发中
 # 当没有已注册扩展要求宿主 Skill 快照时, 跳过宿主 Skill 发现;
 # 插件目录仍会先完成解析
@@ -2752,11 +2831,14 @@ prevent_idle_sleep = true
 
 # rollout_budget — 默认: false | 开发中
 # 为根线程及其所有子 Agent 设置共享的加权 token 总预算;
-# 达到预算时中止当前 turn, 并可在跨过指定剩余额度时向各线程注入提醒
+# 默认达到预算时中止当前 turn, 并可在跨过指定剩余额度时向各线程注入提醒;
+# enforce_limit = false 时只记账和提醒, 不因预算耗尽而中止
 # 该功能启用时必须使用对象形式并设置 limit_tokens 和
 # reminder_at_remaining_tokens, 不能只写 rollout_budget = true
 #
 # rollout_budget.enabled = true
+# enforce_limit: 类型: 布尔值 | 默认: true
+# rollout_budget.enforce_limit = true
 # limit_tokens — 类型: 正整数 (必填)
 # rollout_budget.limit_tokens = 100000
 # reminder_at_remaining_tokens — 类型: 整数数组 (必填)
@@ -2832,6 +2914,11 @@ prevent_idle_sleep = true
 # 由根会话开关控制; 无可用派发边界时沿用现有上下文, 不改变用户授权规则
 # guardian_root_handoff_context = false
 
+# guardian_native_multi_agent_history: 默认: false | 开发中
+# 把会改变状态的 MultiAgent V2 原生调用纳入 Guardian 审查,
+# 并在 Guardian 历史中保留原生多 Agent 调用
+# guardian_native_multi_agent_history = false
+
 # guardian_enhanced_node_repl_transcripts — 默认: false | 开发中
 # 把已完成的 node_repl/code mode 响应加入 Guardian 审查 transcript
 # guardian_enhanced_node_repl_transcripts = false
@@ -2870,12 +2957,10 @@ prevent_idle_sleep = true
 # 同步审查与异步评分共用的记录编码: "line" 为带编号、角色前缀的原文;
 # "json" 将消息正文转义为 JSON 字符串, 由宿主维护元数据
 # guardianv2.transcript_mode = "line"
-# async_classifier_mode — 类型: 字符串 (可选)
-# 默认: 当前模型目录的设置, 未提供时为 "conversation"; 每个父任务固定选择一次。
-# "snapshot" 每次使用独立快照; "conversation" 保留异步分类器的增量会话历史
-# guardianv2.async_classifier_mode = "conversation"
+# 异步分类固定保留增量会话历史; async_classifier_mode 已失效,
+# 配置后会产生启动警告, 应删除该字段
 # async_classifier_conversation_token_limit — 类型: 正整数 | 默认: 100000
-# conversation 模式下一次请求预计超过此 token 数时重置保留的历史;
+# 单次请求预计超过此 token 数时重置保留的异步分类历史;
 # 模型目录可覆盖默认值, 本地设置优先。重置后的新请求仍受模型输入上限约束
 # guardianv2.async_classifier_conversation_token_limit = 100000
 # classifier_instructions — 类型: 字符串 (可选) | 默认: 内置风险分类提示
@@ -2962,14 +3047,20 @@ prevent_idle_sleep = true
 # mcp_2026_07_28 — 默认: false | 开发中
 # 启用 MCP 2026-07-28 发现协议。streamable HTTP 会使用 server/discover 并支持
 # 有界分页发现; 仅在端点明确表现为 legacy-only 时回退旧协议。
-# stdio 还要求对应服务器环境设置 CODEX_MCP_PROTOCOL_VERSION="2026-07-28";
-# 未设置该标记时继续使用旧协议, 未知版本标记会被拒绝
+# stdio 通常还要求对应服务器环境设置 CODEX_MCP_PROTOCOL_VERSION="2026-07-28";
+# 未设置该标记时继续使用旧协议, 未知版本标记会被拒绝。
+# 下方 mcp_connection_sharing 可对符合条件的本地 stdio 服务器自动发现新协议
 # mcp_2026_07_28 = false
 
 # mcp_tool_list_changed: 默认: false | 开发中
 # 处理普通 MCP 服务器在同一回合内发出的 notifications/tools/list_changed,
 # 重新读取工具列表并更新后续采样可见的工具面
 # mcp_tool_list_changed = false
+
+# mcp_connection_sharing: 默认: false | 开发中
+# 对符合条件的本地 stdio MCP 服务器发现协议并在聊天间共享连接;
+# 仅共享兼容 MCP 2026-07-28 的连接, 旧协议或启动时请求用户输入的服务器保持独立
+# mcp_connection_sharing = false
 
 # codex_apps_mcp_2026_07_28 — 默认: false | 开发中
 # 为宿主拥有的 Codex Apps MCP server 启用 MCP 2026-07-28 协议
@@ -2980,6 +3071,10 @@ prevent_idle_sleep = true
 # mcp_enterprise_managed_auth 与资源注册。必须由用户级、宿主或托管配置启用,
 # 项目级 .codex/config.toml 不能自行启用
 # use_xaa = false
+
+# critical_path_timing: 默认: false | 开发中
+# 记录直接工具调用的内部依赖路径与耗时, 用于回合性能归因
+# critical_path_timing = false
 
 # runtime_metrics — 默认: false | 开发中
 # 启用运行时性能指标快照
@@ -3005,6 +3100,7 @@ prevent_idle_sleep = true
 # imagegenext         — image_generation 的历史别名; 请改用规范名称
 
 # ── 已移除功能 (Removed) — 不要在新配置中使用 ──────────────────────────────
+# code_mode_tool_description_first: 已移除, 无运行时效果, 不应配置
 # transcript_v2: 已移除; 全屏界面使用 [tui].fullscreen_transcript
 # stable_environment_tools: 已移除, 不再控制执行环境工具的发布
 # worktrees: 已移除; 受管 worktree 与按仓库组织会话的功能始终可用
@@ -3396,12 +3492,23 @@ config = [
 # 作用: 定义自定义模型 API 提供商, 或对少数内置提供商做受限覆盖
 # 说明: 内置提供商有 openai / amazon-bedrock / amazon-bedrock-runtime /
 #       gcp / ollama / lmstudio
-#       openai / ollama / lmstudio 不能在这里重定义;
+#       openai 仅允许覆盖 model_catalog_url; ollama / lmstudio 不能在这里重定义;
 #       amazon-bedrock 支持覆盖 base_url、auth、http_headers、
 #       aws.profile、aws.region、aws.credential_export 与 aws.auth_refresh
-#       gcp 只支持覆盖 base_url、auth、http_headers; 其他 provider 字段
-#       的非默认值会被拒绝, 无需填写 name / wire_api 等内置字段
+#       gcp 支持覆盖 base_url、auth、http_headers、project_id、location、
+#       credential_file; 其他 provider 字段的非默认值会被拒绝,
+#       无需填写 name / wire_api 等内置字段
 #       你也可以在这里添加自定义提供商 (如本地代理、Azure OpenAI 等)
+
+# 内置 OpenAI: 模型目录覆盖
+# rust-v0.166.0 起允许单独设置 model_catalog_url, 其他非默认 provider 字段仍会被拒绝。
+# URL 必须使用 HTTPS 和 Codex 允许的 ChatGPT 主机; 第三方目录须使用自定义 provider。
+# 端点须返回 Codex 原生目录格式, 不接受公开 /v1/models 格式。
+# 请求携带当前 provider 的 API Key 或 ChatGPT 访问令牌, 应仅配置可信端点;
+# 设置 URL 不会授予目录访问权限, 也不保证端点接受区域 API Key。
+# 推理路由仍由顶层 openai_base_url 控制
+# [model_providers.openai]
+# model_catalog_url = "https://chatgpt.com/backend-api/codex/models"
 
 # ── [model_providers.amazon-bedrock] — Amazon Bedrock ─────────────────────
 # 作用: 覆盖内置 amazon-bedrock 提供商的 endpoint、认证、HTTP headers 或 AWS 设置
@@ -3486,12 +3593,12 @@ config = [
 # model_provider = "gcp"
 # model = "gpt-6.1-terra"
 #
-# 未覆盖 base_url 时须设置 GOOGLE_CLOUD_PROJECT 为 Google Cloud 项目 ID;
-# GOOGLE_CLOUD_LOCATION 为可选区域, 默认 "global"。
+# 未覆盖 base_url 时, project_id 优先于 GOOGLE_CLOUD_PROJECT, 必须至少提供一个;
+# location 优先于 GOOGLE_CLOUD_LOCATION, 两者均未设置时默认 "global"。
 # 默认 endpoint 为:
 # https://aiplatform.googleapis.com/v1/projects/<project>/locations/<location>/publishers/openai/v1
-# 两个环境变量仅接受 ASCII 字母、数字和连字符; 这里不是 TOML 配置键。
-# 覆盖 base_url 后无需上述环境变量
+# 项目 ID 和区域去除首尾空白后不能为空, 仅接受 ASCII 字母、数字和连字符。
+# 覆盖 base_url 后无需提供项目和区域
 #
 # 默认认证执行 gcloud auth application-default print-access-token;
 # Windows 使用 gcloud.cmd, 首次使用前先执行 gcloud auth application-default login。
@@ -3500,6 +3607,14 @@ config = [
 # 可用能力不含 reasoning summary、图像生成、Web search 和模型 WebSocket 传输
 #
 # [model_providers.gcp]
+# project_id: 类型: 字符串 (可选), 覆盖 GOOGLE_CLOUD_PROJECT
+# project_id = "my-google-cloud-project"
+# location: 类型: 字符串 (可选), 覆盖 GOOGLE_CLOUD_LOCATION
+# location = "global"
+# credential_file: 类型: 绝对路径 (可选), Google ADC 凭据文件
+# 仅在认证命令的环境中覆盖 GOOGLE_APPLICATION_CREDENTIALS, 不修改宿主进程环境;
+# 对内置 gcloud 认证和下方自定义 auth 命令均生效
+# credential_file = 'C:\Users\you\.config\gcloud\application_default_credentials.json'
 # base_url: 类型: 字符串 (可选), 覆盖 Vertex endpoint
 # base_url = "https://vertex-proxy.example.com/v1"
 # http_headers: 类型: 键值对 (可选), 追加自定义请求头
@@ -3526,7 +3641,9 @@ name = "custom"
 base_url = "http://127.0.0.1:8317/v1"
 
 # model_catalog_url — 类型: 字符串 (可选) | 默认: 无
-# 模型目录的完整 URL; 返回 Codex 原生目录格式, 不改变 base_url 的推理路由。
+# 模型目录的完整 URL; 返回 Codex 原生目录格式, 不接受公开 /v1/models 格式,
+# 不改变 base_url 的推理路由。内置 openai 的受限覆盖示例见本节开头。
+# 目录请求使用当前 provider 的认证信息, 应仅配置可信端点
 # 未设置时, OpenAI 默认从 Codex backend 发现模型; 覆盖 base_url 时按该端点解析
 # rust-v0.160.0 起, 显式 URL 的目录是模型列表的唯一来源, 不再混入内置模型。
 # 获取失败时会清空该身份的旧目录并使缓存失效, 不回退到内置目录或陈旧条目;
@@ -3648,7 +3765,7 @@ query_params = { "api-version" = "2026-01-01" }
 # cwd = 'C:\Users\you'
 
 # ── [model_providers.<id>.gateway_oauth] — 网关附加 OAuth ──────────────────
-# 作用: 在提供商主认证之外, 获取并发送网关所需的第二份 OAuth 凭证
+# 作用: 获取并发送网关 OAuth 凭证; 可作为唯一认证, 或与提供商主认证组合
 # 约束: 必须设置提供商 base_url; 不可与 AWS / Amazon Bedrock 认证组合。
 # base_url、authorization_url 和 token_url 必须使用 HTTPS (环回地址允许 HTTP),
 # 且不能含 URL 用户名、密码或 fragment。以下均为需替换的示例地址
@@ -3666,9 +3783,13 @@ query_params = { "api-version" = "2026-01-01" }
 # redirect_port — 类型: 整数 (可选) | 范围: 1-65535
 # 省略时使用系统分配的临时本地回调端口; 不接受 0
 # redirect_port = 1457
-# delivery — 必填对象; 以下两种写法二选一
+# delivery: 可选对象; 省略时默认 { kind = "header", name = "Authorization", scheme = "Bearer" }。
+# 默认写法仅用于没有 env_key、auth、experimental_bearer_token 或 requires_openai_auth
+# 主认证的提供商; 不可与 GCP 认证组合, model_catalog_url 如设置还须与 base_url 同源。
+# 本节 custom 示例已设置 env_key, 因此启用 gateway_oauth 时须选择下方自定义头或 Cookie。
 # header: kind / name 必填; scheme 默认 "Bearer"
-# 不能使用 Authorization、Cookie 等保留头, 也不能与提供商静态或环境变量头冲突
+# 除上述 Authorization Bearer 写法外, 不能使用 Authorization、Cookie 等保留头;
+# 所选头也不能与提供商静态或环境变量头冲突。以下两种附加认证写法二选一:
 # delivery = { kind = "header", name = "X-Gateway-Token", scheme = "Bearer" }
 # cookie: kind / name 必填, 不使用 scheme; 提供商不能另外配置 Cookie 头
 # delivery = { kind = "cookie", name = "gateway_session" }
@@ -4048,6 +4169,9 @@ enabled = true
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 # 作用: 配置 Codex 的 OpenTelemetry 遥测数据导出 (Traces / Metrics / Logs)
 # 说明: 适合需要对 Codex 进行性能监控或集成到公司可观测性平台的场景
+# rust-v0.166.0 起, requirements.toml 的 [otel] 可强制本节的设置;
+# 管理员指定的普通字段覆盖本地值, exporter 对象整体替换,
+# span_attributes 和 tracestate 成员内的字段按键合并, 同名键以托管值为准
 
 [otel]
 # environment — 类型: 字符串 | 默认: "dev"
