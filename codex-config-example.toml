@@ -2,7 +2,7 @@
 #                    Codex CLI: config.toml 完整配置参考                      #
 #                                                                             #
 #  文件位置: ~/.codex/config.toml (即 $CODEX_HOME/config.toml)                #
-#  适用版本: Codex CLI rust-v0.166.0 (源码提交 6ff1e1ca3b)                   #
+#  适用版本: Codex CLI rust-v0.167.0 (源码提交 086ccc833b)                   #
 #  说    明: 本文件覆盖当前公开 Schema 可见配置项, 并附带详细中文参考         #
 #            尽量标注类型 / 默认值 / 可选值 / 运行时作用                      #
 #            本文件含非默认值和环境相关示例, 使用前请按实际环境审阅              #
@@ -98,6 +98,10 @@ approval_policy = "on-request"
 #       rust-v0.165.0 起, TUI 启动新会话且未在本次调用显式指定 reviewer 时,
 #       不再用客户端本地解析的默认值覆盖服务端选择。CLI 显式覆盖仍优先;
 #       通过 --profile 启动时仍使用该预设解析出的 reviewer
+#       rust-v0.167.0 起, 托管 requirements.toml 中 decision = "prompt-user"
+#       的命令规则要求每次重新由人工决定, Auto-review、会话级批准和永久批准
+#       均不能代替本次人工审批; 没有支持该协议的客户端连接时命令会被拒绝。
+#       该规则属于托管执行策略, 不是本文件的配置项
 # approvals_reviewer = "user"
 
 # ── sandbox_mode ───────────────────────────────────────────────────────────
@@ -197,9 +201,11 @@ service_tier = "priority"
 # 类型: 布尔值 (可选) | 默认: false
 # 作用: 为新线程与非交互回合设置 Daybreak 偏好
 # 说明: CLI 还需启用 [features].cli_daybreak, 并由所连接服务的模型目录确认
-#       当前账号和模型支持 Daybreak。仅适用于内置 openai 提供商;
+#       当前账号和模型支持 Daybreak。rust-v0.167.0 起, 提供商需声明支持
+#       access_programs.cyber: 内置 openai 默认支持, 自定义提供商须显式设置
+#       capabilities.cyber_access_programs = true (见第 20 节)。
 #       TUI 与非交互 exec 均支持 ChatGPT 登录, 或启用
-#       api_key_cyber_access_programs 后使用具备相应权限的 OpenAI API Key。
+#       api_key_cyber_access_programs 后使用具备相应权限的 API Key。
 #       rust-v0.163.0 起, 上述两个功能标志均默认启用; 顶层 daybreak 偏好
 #       仍默认 false, 功能标志开启本身不代表账号已获得 Daybreak 访问权限。
 #       TUI 可通过 /daybreak 切换并保存选择; 恢复会话时优先使用会话中
@@ -1145,14 +1151,16 @@ dedicated_tools = false
 disable_on_external_context = false
 
 # extract_model — 类型: 字符串 (可选)
-# 默认: 当前 provider 为记忆提取阶段配置的首选模型
+# 默认: 当前 provider 为记忆提取阶段配置的首选模型; rust-v0.167.0 起,
+#       通用首选模型为 "gpt-6-luna", 需要后端专用模型 ID 的提供商可覆盖它
 # 指定用于从会话中提取记忆的模型
-# extract_model = "gpt-5.6-luna"
+# extract_model = "gpt-6-luna"
 
 # consolidation_model — 类型: 字符串 (可选)
-# 默认: 当前 provider 为记忆整理阶段配置的首选模型
+# 默认: 当前 provider 为记忆整理阶段配置的首选模型; rust-v0.167.0 起,
+#       通用首选模型为 "gpt-6.1-terra", 需要后端专用模型 ID 的提供商可覆盖它
 # 指定用于合并/整理记忆的模型
-# consolidation_model = "gpt-5.6-terra"
+# consolidation_model = "gpt-6.1-terra"
 
 # consolidation_service_tier: 类型: 字符串 (可选) | 默认: "default"
 # 记忆整理阶段使用的服务层, 独立于顶层 service_tier; 默认采用标准路由。
@@ -1861,8 +1869,9 @@ terminal_resize_reflow_max_rows = 9000
 #
 # enabled — 类型: 布尔值 | 默认: false
 #   控制该 profile 是否授予沙箱网络访问权限
-#   它本身不启动托管代理; 只有同时启用 [features] network_proxy 时,
-#   下方代理、域名、MITM 和 Unix socket 策略才会用于托管代理
+#   它本身不启动托管代理; 可通过 [features] network_proxy 启用代理,
+#   管理员的托管网络约束也可独立启动代理, 并优先于冲突的 profile 设置。
+#   [features].network_proxy 的配置仅在该功能启用时参与解析
 #
 # mode — 类型: 字符串 | 默认: "full"
 #   可选值:
@@ -1904,10 +1913,14 @@ terminal_resize_reflow_max_rows = 9000
 # *.example.com 仅匹配子域, **.example.com 同时匹配主域与子域;
 # ? 匹配恰好一个字符 (包括点), 可以与 * 组合使用。
 # deny 规则优先; 单独的全局 * 默认被拒绝
-# 管理员可通过 requirements.toml 的 network_proxy.review_domains
+# 管理员可通过 requirements.toml 的 permissions.network.review_domains
 # 将匹配域名送入现有网络审批流程。显式 deny 优先于该列表, 该列表优先于普通
 # allow 规则; 审批缓存、hooks 与 reviewer 路由仍生效。
-# network_proxy 是 requirements.toml 中的规范表名; 本文件仍使用权限 profile 的 network。
+# rust-v0.167.0 起, 托管共享网络约束使用 requirements.toml 的 [permissions.network]。
+# 该表不能留空, 也不能与顶层 [network_proxy] / [experimental_network] 混用,
+# 包括来自不同 requirements 层的配置。在 requirements.toml 中, network 为共享
+# 约束保留, 不能作为权限 profile 名; 本文件仍允许名为 network 的 profile,
+# 其网络设置与其他 profile 一样写在 [permissions.<profile>.network]。
 # review_domains 仅属于 requirements, 不能写入本文件的 network 子表或
 # [features].network_proxy 对象, 本地配置也不能覆盖它
 # 独立示例 (将 domain_example 替换为你的 profile 名):
@@ -2118,8 +2131,9 @@ fast_mode = true
 # cli_daybreak = true
 
 # api_key_cyber_access_programs: 默认: true | 稳定
-# 使用内置 OpenAI 提供商和 API Key 时, 允许向请求透传显式选择的
-# cyber access program; 仍需账号与模型具有对应访问权限
+# 使用 API Key 且提供商声明支持 capabilities.cyber_access_programs 时,
+# 允许向请求透传显式选择的 cyber access program; 内置 openai 默认支持,
+# 自定义提供商须显式声明, 仍需账号与模型具有对应访问权限
 # api_key_cyber_access_programs = true
 
 # enable_request_compression — 默认: true | 稳定
@@ -2394,10 +2408,20 @@ compaction_image_budget = true
 # 启用记忆系统 (从会话中提取经验, 在未来会话中注入)
 memories = true
 
+# deferred_tool_world_state: 默认: true | 稳定
+# 把延迟加载工具命名空间的增删变化记录到模型可见 world state;
+# 启用后 tool_search 不再重复列出同一份来源清单。rust-v0.167.0 起默认启用
+# deferred_tool_world_state = true
+
 # incremental_tools: 默认: true | 稳定
 # 为模型目录中启用 Responses Lite 的模型, 在 world state 中记录顶层工具定义,
 # 并以增量上下文发布变化; 普通 Responses 模型不使用此路径
 # incremental_tools = true
+
+# suppress_model_change_announcements: 默认: false | 稳定
+# 在 incremental_tools 使用的增量上下文中, 抑制切换模型时的模型 ID 公告;
+# 模型指令发生变化时仍会更新指令, 不影响实际模型选择
+# suppress_model_change_announcements = false
 
 # prediction_preserve_parent_tools: 默认: true | 稳定
 # 在禁用 MCP 的预测 fork 与 thread/sample 采样线程中保留父会话继承的工具声明,
@@ -2416,10 +2440,16 @@ memories = true
 # mcp_oauth_refresh_coordination = true
 
 # bedrock_setup_wizard: 默认: true | 稳定
-# 嵌入式 TUI 仍需登录、未显式指定 model_provider、当前提供商为 openai,
+# 嵌入式 TUI 仍需登录、当前提供商为 openai,
 # 且登录策略允许 API 登录时, 提供 Amazon Bedrock 初始化向导;
 # 检测到 AWS 凭据时, API Key 入口与其他 AWS 登录方式一起显示
 # bedrock_setup_wizard = true
+
+# gcp_setup_wizard: 默认: false | 稳定
+# 与上方 Bedrock 向导采用相同的登录条件, 在 "Sign in another way" 中提供
+# Google Cloud Vertex AI 初始化向导, 支持 Application Default Credentials
+# 或凭据文件, 并保存项目、区域等提供商配置
+# gcp_setup_wizard = false
 
 # system_proxy_fallback — 默认: true | 稳定
 # 符合条件的初始化请求在常规网络路由失败后, 尝试通过系统代理重试;
@@ -2445,6 +2475,11 @@ memories = true
 # prevent_idle_sleep — 默认: false | 实验 (macOS/Linux/Windows)
 # 防止系统在 Codex 活跃时进入休眠
 prevent_idle_sleep = true
+
+# respect_system_proxy: 默认: false | 实验
+# 让 Codex 自有网络客户端使用 macOS 或 Windows 的系统代理设置;
+# rust-v0.167.0 起可在 /experimental 中切换
+# respect_system_proxy = false
 
 # network_proxy — 默认: false | 实验
 # 为已经具备网络访问权限的沙箱会话启用托管网络代理限制
@@ -2517,9 +2552,14 @@ prevent_idle_sleep = true
 
 # tui_multi_backend: 默认: false | 开发中
 # 为 TUI 发现和选择多个会话后端预留的开关。
-# 本 tag 仅注册配置并准备多后端会话容器, 常规 CLI 启动仍只传入单一后端,
-# 尚无读取此开关并自动发现或连接多个后端的运行路径
+# 本 tag 尚无读取此开关并自动发现或连接多个后端的运行路径;
+# 会话选择器现有的后端切换功能不由此开关控制
 # tui_multi_backend = false
+
+# tui_extensions_statusline: 默认: false | 开发中
+# 使用实验性的 TUI Extensions 渲染器显示已配置的 [tui].status_line;
+# 未启用时使用原生状态栏渲染器
+# tui_extensions_statusline = false
 
 # async_compaction: 默认: false | 开发中
 # 在达到前台压缩限制前, 按模型完整上下文窗口的使用比例启动后台远端压缩。
@@ -2557,6 +2597,11 @@ prevent_idle_sleep = true
 # 执行结果的调用及时返回, 使模型更早接收并处理补充指令;
 # 已启动的 code mode 执行单元及其嵌套工具会继续在后台运行
 # instant_interrupt = true
+
+# interrupt_on_cancel: 默认: false | 开发中
+# 取消回合时尝试中断上游推理; 仅对启用 Responses Lite 且响应流支持
+# interrupt 的模型生效, 其余路径仍按普通取消流程结束
+# interrupt_on_cancel = false
 
 # agent_message_board — 默认: false | 开发中
 # 为同一 Agent 树启用共享讨论工具; 还要求 multi_agent_v2 = true。
@@ -2631,6 +2676,11 @@ prevent_idle_sleep = true
 # 通过标准输入输出上的 gRPC 与进程自有的独立 code mode 宿主通信
 # code_mode_host_grpc = false
 
+# code_mode_host_output_truncation: 默认: false | 开发中
+# 在进程自有的独立 code mode 宿主中收集并截断输出, 再发送给 Core,
+# 减少大输出跨进程传输的开销
+# code_mode_host_output_truncation = false
+
 # code_mode_tool_search — 默认: false | 开发中
 # 在 JavaScript code mode 内提供按相关性排序的工具发现;
 # 需同时启用 code_mode
@@ -2687,10 +2737,10 @@ prevent_idle_sleep = true
 # 让 turn 的 diff 展示路径相对于当前工作目录, 而不是相对于 Git 根目录
 # cwd_relative_turn_diffs = false
 
-# deferred_tool_world_state — 默认: false | 开发中
-# 把延迟加载工具命名空间的增删变化记录到模型可见 world state;
-# 启用后 tool_search 不再重复列出同一份来源清单
-# deferred_tool_world_state = false
+# incremental_exec_tools: 默认: false | 开发中
+# 为增量工具目录中 CodeModeOnly 的 exec 定义差异更新预留的开关。
+# 本 tag 仅注册此开关, 没有运行时消费者, 配置后尚不会改变工具目录行为
+# incremental_exec_tools = false
 
 # standalone_web_search — 默认: false | 开发中
 # 通过扩展工具面暴露独立 web_search 工具
@@ -3066,6 +3116,11 @@ prevent_idle_sleep = true
 # 为宿主拥有的 Codex Apps MCP server 启用 MCP 2026-07-28 协议
 # codex_apps_mcp_2026_07_28 = false
 
+# apps_early_resource_discovery: 默认: false | 开发中
+# 让宿主拥有的 Codex Apps server 提前读取资源目录, 与初始工具清单加载并行;
+# 仅作用于该 Apps server, 不会让普通 MCP 服务器自动提前发现资源
+# apps_early_resource_discovery = false
+
 # use_xaa — 默认: false | 开发中
 # 为配置为 ema_auth 的 MCP 资源启用企业刷新令牌交换; 需同时配置第 21 节的
 # mcp_enterprise_managed_auth 与资源注册。必须由用户级、宿主或托管配置启用,
@@ -3079,10 +3134,6 @@ prevent_idle_sleep = true
 # runtime_metrics — 默认: false | 开发中
 # 启用运行时性能指标快照
 # runtime_metrics = false
-
-# respect_system_proxy — 默认: false | 开发中
-# 让 Codex 自有网络客户端遵循宿主系统代理设置
-# respect_system_proxy = false
 
 # terminal_visualization_instructions — 默认: false | 开发中
 # 在 TUI developer instructions 中追加终端可视化相关指导
@@ -3456,6 +3507,30 @@ config = [
 # [plugins."example-plugin@example-marketplace".mcp_servers.docs.tools.search]
 # approval_mode = "approve"
 
+# ── 插件内 App 策略覆盖 ───────────────────────────────────────────────────
+# 表路径: plugins."<plugin>@<marketplace>".apps.<connector_id>
+# 按 connector ID 设置 App 策略, 字段与第 22 节 [apps.<app_id>] 相同,
+# 包括启用状态、审批、工具暴露位置、单账号 links 与单工具 tools 配置。
+# 插件被配置禁用时忽略其 App 设置; 顶层 [apps] 中显式指定的同名字段优先,
+# 只覆盖已指定字段, 其余字段仍可继承插件设置。
+# apps._default 在此处会被忽略, 全局默认策略仍使用顶层 [apps._default]。
+# 将 connector_example / link_example 替换为实际 connector ID / link ID。
+# [plugins."example-plugin@example-marketplace".apps."connector_example"]
+# enabled = true
+# approvals_reviewer = "user"
+# default_tools_approval_mode = "prompt"
+# destructive_enabled = false
+# open_world_enabled = true
+# omit_tools_from = ["code_mode"]
+#
+# [plugins."example-plugin@example-marketplace".apps."connector_example".links."link_example"]
+# approvals_reviewer = "auto_review"
+# default_tools_approval_mode = "writes"
+#
+# [plugins."example-plugin@example-marketplace".apps."connector_example".tools.search]
+# enabled = true
+# approval_mode = "approve"
+
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗
 # ║                     第 19 节: Marketplaces (插件市场) 配置              ║
@@ -3660,6 +3735,12 @@ wire_api = "responses"
 # 模型、当前回合和托管要求仍可进一步限制可用能力。
 # 使用 dotted key, 使后续认证和重试字段仍属于 [model_providers.custom]
 #
+# cyber_access_programs: 类型: 布尔值 | 默认: 内置 openai 为 true, 其他提供商为 false
+# 是否支持显式选择并转发 access_programs.cyber (例如 Daybreak)。
+# 自定义网关需实际支持该请求字段才能启用; 此项不授予访问权限, 也不改变认证方式。
+# 默认按 provider ID 判断, 将自定义提供商的 name 写成 "OpenAI" 不会启用此能力
+# capabilities.cyber_access_programs = false
+#
 # external_web_access — 类型: 布尔值 | 自定义 Responses 提供商默认: true
 # 是否允许 hosted web search 实时访问网页; false 时 live / indexed 会降为
 # cached, 或在 cached 不被允许时禁用搜索。这不是通用网络访问开关
@@ -3783,6 +3864,12 @@ query_params = { "api-version" = "2026-01-01" }
 # redirect_port — 类型: 整数 (可选) | 范围: 1-65535
 # 省略时使用系统分配的临时本地回调端口; 不接受 0
 # redirect_port = 1457
+# credentials_store: 类型: 字符串 | 默认: "keyring" | 可选值: "keyring" | "file"
+# keyring 使用保存在系统密钥链中的口令加密凭证;
+# file 将网关 OAuth 凭证明文保存到 $CODEX_HOME/secrets/gateway_oauth.json。
+# 此项独立于顶层 cli_auth_credentials_store / mcp_oauth_credentials_store,
+# 默认不会因密钥链不可用而自动改用明文文件
+# credentials_store = "keyring"
 # delivery: 可选对象; 省略时默认 { kind = "header", name = "Authorization", scheme = "Bearer" }。
 # 默认写法仅用于没有 env_key、auth、experimental_bearer_token 或 requires_openai_auth
 # 主认证的提供商; 不可与 GCP 认证组合, model_catalog_url 如设置还须与 base_url 同源。
@@ -4177,6 +4264,12 @@ enabled = true
 # environment — 类型: 字符串 | 默认: "dev"
 # 环境标签, 附加到导出的 OTEL 资源 (如 dev / staging / prod / test)
 environment = "dev"
+
+# log_sse_deltas: 类型: 布尔值 | 默认: true
+# 是否记录事件类型以 .delta 结尾且成功处理的 SSE 增量事件。
+# 设为 false 可减少流式日志量, 仍保留错误、完成事件与指标;
+# 不影响模型响应流和会话历史。requirements.toml 的 [otel] 可强制此值
+log_sse_deltas = true
 
 # log_user_prompt — 类型: 布尔值 | 默认: false
 # 是否在 codex.user_prompt 日志事件中记录用户原始提示文本;
